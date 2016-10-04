@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Projects\Model;
@@ -782,7 +782,7 @@ class Project extends AbstractKey
         $projects = static::fetchAll(array(), $p4);
         $affected = array();
         foreach ($projects as $project) {
-            // extract the job view and break out the various key=value filter(s) on whitespace
+            // extract the job view and break out the various field=value filter(s) on whitespace
             // we generate a conditions array with field ids as keys and a regex pattern as value
             $matched = false;
             $jobview = trim($project->getJobview());

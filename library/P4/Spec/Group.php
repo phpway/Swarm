@@ -8,9 +8,9 @@
  * - "group -i" with no populated users/owners/subgroups will report 'created' but it isn't
  * - "groups" output is unusually formatted; see Pural Abstract for details
  *
- * @copyright   2011 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace P4\Spec;

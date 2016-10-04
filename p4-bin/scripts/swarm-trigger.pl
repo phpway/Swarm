@@ -2,8 +2,8 @@
 #
 # Perforce Swarm Trigger Script
 #
-# @copyright   2015 Perforce Software. All rights reserved.
-# @version     <release>/<patch>
+# @copyright   2013-2016 Perforce Software. All rights reserved.
+# @version     2016.2/1446446
 #
 # This script is used to push Perforce events into Swarm or to restrict committing
 # changes that are associated to reviews in Swarm. This script requires certain

@@ -2,10 +2,10 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
  *              Portions of this file are copyright 2005-2013 Zend Technologies USA Inc. licensed under New BSD License
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Application\Response;

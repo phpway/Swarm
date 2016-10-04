@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Api\Controller;
@@ -17,8 +17,8 @@ use Zend\View\Model\JsonModel;
  * Swarm Projects
  *
  * @SWG\Resource(
- *   apiVersion="v3",
- *   basePath="/api/v3/"
+ *   apiVersion="v4",
+ *   basePath="/api/v4/"
  * )
  */
 class ProjectsController extends AbstractApiController
@@ -29,7 +29,8 @@ class ProjectsController extends AbstractApiController
      *     @SWG\Operation(
      *         method="GET",
      *         summary="Get List of Projects",
-     *         notes="Returns the complete list of projects in Swarm.",
+     *         notes="Returns a list of projects in Swarm that are visible to the current user. Administrators will see
+     *                all projects, including private ones.",
      *         nickname="listProjects",
      *         @SWG\Parameter(
      *             name="fields",
@@ -47,7 +48,7 @@ class ProjectsController extends AbstractApiController
      *   To list all projects:
      *
      *   ```bash
-     *   curl -u "username:password" "https://my-swarm-host/api/v3/projects?fields=id,description,members,name"
+     *   curl -u "username:password" "https://my-swarm-host/api/v4/projects?fields=id,description,members,name"
      *   ```
      *
      *   Pagination is not currently supported by this endpoint. Swarm responds with a list of all projects:
@@ -96,6 +97,7 @@ class ProjectsController extends AbstractApiController
      *           "members": ["alice"],
      *           "name": "TestProject",
      *           "owners": [],
+     *           "private": false,
      *           "subgroups": []
      *         }
      *       ]
@@ -155,7 +157,7 @@ class ProjectsController extends AbstractApiController
      *
      *   ```bash
      *   curl -u "username:password" \
-     *        "https://my-swarm-host/api/v3/projects/testproject2?fields=id,description,members,name"
+     *        "https://my-swarm-host/api/v4/projects/testproject2?fields=id,description,members,name"
      *   ```
      *
      *   Swarm responds with a project entity:
@@ -194,6 +196,7 @@ class ProjectsController extends AbstractApiController
      *         "members": ["alice"],
      *         "name": "TestProject",
      *         "owners": [],
+     *         "private": false,
      *         "subgroups": []
      *       }
      *     }
@@ -259,6 +262,15 @@ class ProjectsController extends AbstractApiController
      *             required=false
      *         ),
      *         @SWG\Parameter(
+     *             name="private",
+     *             description="Private projects are visible only to Members, Moderators, Owners, and Administrators.
+     *                          (Default: false)
+     *             ",
+     *             paramType="form",
+     *             type="boolean",
+     *             required=false
+     *         ),
+     *         @SWG\Parameter(
      *             name="deploy",
      *             description="Configuration for automated deployment.
      *                          Example: {&quot;enabled&quot;: true,
@@ -315,7 +327,7 @@ class ProjectsController extends AbstractApiController
      *        -d "description=The third iteration of our test project." \
      *        -d "members[]=alice" \
      *        -d "members[]=bob" \
-     *        "https://my-swarm-host/api/v3/projects/"
+     *        "https://my-swarm-host/api/v4/projects/"
      *   ```
      *
      *   Swarm responds with the new project entity:
@@ -333,25 +345,33 @@ class ProjectsController extends AbstractApiController
      *       "members": ["alice", "bob"],
      *       "name": "TestProject 3",
      *       "owners": [],
+     *       "private": false,
      *       "subgroups": [],
      *       "tests": {"url": "", "enabled": false}
      *     }
      *   }
      *   ```
      *
-     * @apiUsageExample Creating a project with branches:
+     * @apiUsageExample Creating a private project with branches
      *
      *   Specifying a branch requires using array notation and providing at least two fields (`name` and `paths`) for
      *   each branch you wish to create. Creating more than one branch involves incrementing the `branches[0]` specifier
      *   for each branch - an example of this accompanies the PATCH endpoint documentation.
      *
+     *   Projects are public by default. Marking a project as Private requires using `{private: true}` in JSON, and
+     *   using `-d "private=1"` in regular form-encoded requests.
+     *
+     *   IMPORTANT: Form-encoded requests only accept `0` for false in boolean values -- using the word `false` will be
+     *   evaluated as a non-zero (and therefore non-false) value.
+     *
      *   ```bash
      *   curl -u "username:password" \
      *        -d "name=TestProject 4" \
+     *        -d "private=1" \
      *        -d "members[]=bob" \
      *        -d "branches[0][name]=Branch One" \
      *        -d "branches[0][paths][]=//depot/main/TestProject/..." \
-     *        "https://my-swarm-host/api/v3/projects"
+     *        "https://my-swarm-host/api/v4/projects"
      *   ```
      *
      *   Swarm responds with the new project entity:
@@ -378,6 +398,7 @@ class ProjectsController extends AbstractApiController
      *       "members": ["bob"],
      *       "name": "TestProject 4",
      *       "owners": [],
+     *       "private": true,
      *       "subgroups": [],
      *       "tests": {"url": "", "enabled": false}
      *     }
@@ -406,6 +427,7 @@ class ProjectsController extends AbstractApiController
      *         "members": ["alice"],
      *         "name": "TestProject",
      *         "owners": [],
+     *         "private": false,
      *         "subgroups": [],
      *         "tests": {"url": "", "enabled": false}
      *       }
@@ -416,7 +438,6 @@ class ProjectsController extends AbstractApiController
      */
     public function create($data)
     {
-        unset($data['private']);
         $result = $this->forward('Projects\Controller\Index', 'add', null, null, $data);
 
         if (!$result->getVariable('isValid')) {
@@ -479,6 +500,15 @@ class ProjectsController extends AbstractApiController
      *             required=false
      *         ),
      *         @SWG\Parameter(
+     *             name="private",
+     *             description="Private projects are visible only to Members, Moderators, Owners, and Administrators.
+     *                          (Default: false)
+     *             ",
+     *             paramType="form",
+     *             type="boolean",
+     *             required=false
+     *         ),
+     *         @SWG\Parameter(
      *             name="deploy",
      *             description="Configuration for automated deployment.
      *                          Example: {&quot;enabled&quot;: true,
@@ -536,7 +566,7 @@ class ProjectsController extends AbstractApiController
      *   curl -u "username:password" \
      *        -X PATCH
      *        -d "description=Witness the power of a fully operational Swarm project." \
-     *        "https://my-swarm-host/api/v3/projects/testproject3"
+     *        "https://my-swarm-host/api/v4/projects/testproject3"
      *   ```
      *
      *   Swarm responds with the updated project entity:
@@ -554,13 +584,14 @@ class ProjectsController extends AbstractApiController
      *       "members": ["alice"],
      *       "name": "TestProject 3",
      *       "owners": [],
+     *       "private": false,
      *       "subgroups": [],
      *       "tests": {"url": "", "enabled": false}
      *     }
      *   }
      *   ```
      *
-     * @apiUsageExample Editing a project to add a moderated branch:
+     * @apiUsageExample Editing a project to add a moderated branch and make the project public
      *
      *   Specifying a branch requires using array notation and providing at least two fields (`name` and `paths`) for
      *   each branch you wish to create. Creating more than one branch involves incrementing the `branches[0]` specifier
@@ -569,15 +600,22 @@ class ProjectsController extends AbstractApiController
      *   IMPORTANT: If you have existing branches, you must specify all of them in the query to avoid data loss.
      *   This operation sets the value of the entire `branches` property to match the provided input.
      *
+     *   Marking a private project as Public requires using `{private: false}` in JSON, or using `-d "private=0"` in
+     *   regular form-encoded requests.
+     *
+     *   IMPORTANT: Form-encoded requests only accept `0` for false in boolean values -- using the word `false` will be
+     *   evaluated as a non-zero (and therefore non-false) value.
+     *
      *   ```bash
      *   curl -u "username:password" \
      *        -X PATCH \
+     *        -d "private=0" \
      *        -d "branches[0][name]=Branch One" \
      *        -d "branches[0][paths][]=//depot/main/TestProject/..." \
      *        -d "branches[1][name]=Branch Two" \
      *        -d "branches[1][paths][]=//depot/main/SecondBranch/..." \
      *        -d "branches[1][moderators][]=bob" \
-     *        "https://my-swarm-host/api/v3/projects/testproject-4"
+     *        "https://my-swarm-host/api/v4/projects/testproject-4"
      *   ```
      *
      *   Swarm responds with the new project entity:
@@ -612,6 +650,7 @@ class ProjectsController extends AbstractApiController
      *       "members": ["bob"],
      *       "name": "TestProject 4",
      *       "owners": [],
+     *       "private": false,
      *       "subgroups": [],
      *       "tests": {"url": "", "enabled": false}
      *     }
@@ -640,6 +679,7 @@ class ProjectsController extends AbstractApiController
      *         "members": ["alice"],
      *         "name": "TestProject",
      *         "owners": [],
+     *         "private": false,
      *         "subgroups": [],
      *         "tests": {"url": "", "enabled": false}
      *       }
@@ -653,9 +693,8 @@ class ProjectsController extends AbstractApiController
         $request  = $this->getRequest();
         $response = $this->getResponse();
         $request->setMethod(Request::METHOD_POST);
-        unset($data['private']);
-        $result = $this->forward('Projects\Controller\Index', 'edit', array('project' => $id), null, $data);
 
+        $result = $this->forward('Projects\Controller\Index', 'edit', array('project' => $id), null, $data);
         if (!$result->getVariable('isValid')) {
             if ($response->isOK()) {
                 $this->getResponse()->setStatusCode(400);
@@ -692,7 +731,7 @@ class ProjectsController extends AbstractApiController
      *   owners set.
      *
      *   ```bash
-     *   curl -u "username:password" -X DELETE "https://my-swarm-host/api/v3/projects/testproject3"
+     *   curl -u "username:password" -X DELETE "https://my-swarm-host/api/v4/projects/testproject3"
      *   ```
      *
      *   Assuming that the authenticated user has permission, Swarm responds with the id of the deleted project:
@@ -761,7 +800,12 @@ class ProjectsController extends AbstractApiController
 
     protected function normalizeProject($project, $limitEntityFields = null)
     {
-        unset($project['isMember'], $project['private']);
+        // ensure private projects have no followers
+        if (isset($project['private']) && $project['private'] && isset($project['followers'])) {
+            $project['followers'] = array();
+        }
+
+        unset($project['isMember']);
         $project = $this->limitEntityFields($project, $limitEntityFields);
 
         return $this->sortEntityFields($project);

@@ -4,7 +4,7 @@ use P4\File\File;
 $limit    = 1000;
 $change   = $event->getParam('change');
 $review   = $event->getParam('review');
-$projects = $this->projectList($activity->get('projects'), null, array('noLink' => true));
+$projects = $this->projectList($activity->get('projects'), null, array('noLink' => true, 'hidePrivate' => true));
 $subject  = array();
 
 $subject[] = $activity->get('user');

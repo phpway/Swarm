@@ -1,9 +1,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 swarm.project = {
@@ -140,6 +140,99 @@ swarm.project = {
             });
         });
 
+        // wire up project save to check user role and show a confirmation tooltip with a warning
+        // message if the user won't be able to edit or access this project after save
+        $(wrapper).find('.btn-save').on('click', function(e) {
+            // no checks needed for admin users as they can access/edit any project
+            if ($('body').hasClass('admin')) {
+                return;
+            }
+
+            var message       = '',
+                currentUserId = swarm.user.getAuthenticatedUser() ? swarm.user.getAuthenticatedUser().id : null,
+                formObject    = $.deparam($(wrapper).find('form').serialize()),
+                moderators    = $.map(formObject.branches || [], function (branch) { return branch.moderators || []; }),
+                hasOwners     = $.isArray(formObject.owners),
+                hasSubgroups  = $.isArray(formObject.subgroups),
+                isMember      = $.inArray(currentUserId, formObject.members) !== -1,
+                isOwner       = $.inArray(currentUserId, formObject.owners)  !== -1,
+                isModerator   = $.inArray(currentUserId, moderators) !== -1,
+                isPrivate     = formObject['private'] === "1";
+
+            // at the moment we cannot determine from here if the user is a member of a group
+            // to avoid false warnings, we have to assume the user is a member if members are specified via groups
+            isMember = isMember || hasSubgroups;
+
+            // user cannot edit project with owners if not an owner
+            if (hasOwners && !isOwner) {
+                message = '<p>' + swarm.te(
+                    "You might not be able to edit this project later if you are not an owner."
+                ) + '</p>';
+            }
+
+            // user cannot edit project with no owners if not a member
+            if (!hasOwners && !isMember) {
+                message = '<p>' + swarm.te(
+                    "You might not be able to edit this project later if you are not a member."
+                ) + '</p>';
+            }
+
+            // user cannot access private project if not a member, owner or branch moderator
+            if (isPrivate && !isMember && !isOwner && !isModerator) {
+                message += '<p>' + swarm.te(
+                    "You might not be able to access this project later."
+                    + " Only owners, members and branch moderators can access private projects."
+                ) + '</p>';
+            }
+
+            if (!message) {
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            // show confirmation tooltip
+            var button  = $(this),
+                confirm = swarm.tooltip.showConfirm(button, {
+                    placement:   'top',
+                    customClass: 'project-save-tooltip',
+                    content:     message,
+                    buttons: [
+                        '<button type="button" class="btn btn-primary btn-confirm">' + swarm.te('Continue') + '</button>',
+                        '<button type="button" class="btn btn-cancel">' + swarm.te('Cancel') + '</button>'
+                    ]
+                });
+
+            // disable form controls (we will re-enable them when confirmation tooltip is closed)
+            var formControls = button.closest('.group-buttons').find('.btn');
+            formControls.prop('disabled', true);
+
+            // wire up cancel button
+            confirm.tip().on('click', '.btn-cancel', function () {
+                confirm.destroy();
+                formControls.prop('disabled', false);
+            });
+
+            // wire up save button
+            confirm.tip().on('click', '.btn-confirm', function () {
+                confirm.destroy();
+                $(wrapper).find('form').submit();
+            });
+        });
+
+        // close the project-save warning popover when user clicks outside
+        $(document).on('click', function(e) {
+            if ($(e.target).closest('.project-save-tooltip').length === 0
+                && $(wrapper).find('.btn-save').data('popover') !== undefined
+            ) {
+                e.preventDefault();
+                $(wrapper).find('.btn-save').data('popover').destroy();
+                $(wrapper).find('form .group-buttons .btn').prop('disabled', false);
+            }
+        });
+
+        // initialize placeholder for post body
         var setPlaceholder = function() {
             var format      = $('select#postFormat').val(),
                 placeholder = '';
@@ -151,7 +244,6 @@ swarm.project = {
             $('textarea#postBody').attr('placeholder', placeholder);
         };
 
-        // initialize placeholder for post body
         setPlaceholder();
         $('select#postFormat').on('change', setPlaceholder);
 
@@ -410,6 +502,7 @@ swarm.projects = {
                     + '     {{>users}}'
                     + '   </span>'
                     + '  </div>'
+                    + '  {{if isPrivate}}<i class="icon-eye-close private-project-icon" title="{{te:"Private Project"}}"></i> {{/if}}'
                     + '  <a href="{{url:"/projects"}}/{{urlc:id}}" class="name">{{>name}}</a>'
                     + '  <p class="description muted"><small>'
                     + '   {{if description}}{{:description}}{{else}}{{te:"No description"}}{{/if}}'

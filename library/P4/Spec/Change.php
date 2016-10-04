@@ -2,9 +2,9 @@
 /**
  * Abstracts operations against Perforce changes.
  *
- * @copyright   2011 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace P4\Spec;
@@ -25,31 +25,31 @@ use P4\Spec\Exception\NotFoundException;
 
 class Change extends PluralAbstract implements ResolvableInterface
 {
-    const SPEC_TYPE             = 'change';
-    const ID_FIELD              = 'Change';
+    const SPEC_TYPE = 'change';
+    const ID_FIELD  = 'Change';
 
-    const DEFAULT_CHANGE        = 'default';
-    const PENDING_CHANGE        = 'pending';
-    const SHELVED_CHANGE        = 'shelved';
-    const SUBMITTED_CHANGE      = 'submitted';
+    const DEFAULT_CHANGE   = 'default';
+    const PENDING_CHANGE   = 'pending';
+    const SHELVED_CHANGE   = 'shelved';
+    const SUBMITTED_CHANGE = 'submitted';
 
-    const PUBLIC_CHANGE         = 'public';
-    const RESTRICTED_CHANGE     = 'restricted';
+    const PUBLIC_CHANGE     = 'public';
+    const RESTRICTED_CHANGE = 'restricted';
 
-    const FETCH_BY_FILESPEC     = 'filespec';
-    const FETCH_BY_IDS          = 'ids';
-    const FETCH_BY_STATUS       = 'status';
-    const FETCH_INTEGRATED      = 'integrated';
-    const FETCH_BY_CLIENT       = 'client';
-    const FETCH_BY_USER         = 'user';
+    const FETCH_BY_FILESPEC = 'filespec';
+    const FETCH_BY_IDS      = 'ids';
+    const FETCH_BY_STATUS   = 'status';
+    const FETCH_INTEGRATED  = 'integrated';
+    const FETCH_BY_CLIENT   = 'client';
+    const FETCH_BY_USER     = 'user';
 
-    const RESOLVE_FILE          = 'file';
+    const RESOLVE_FILE = 'file';
 
-    const MAX_SUBMIT_ATTEMPTS   = 3;
+    const MAX_SUBMIT_ATTEMPTS = 3;
 
-    protected $cache            = array();
-    protected $fixStatus        = null;
-    protected $fields           = array(
+    protected $cache     = array();
+    protected $fixStatus = null;
+    protected $fields    = array(
         'Date'          => array(
             'accessor'  => 'getDate'
         ),
@@ -185,8 +185,8 @@ class Change extends PluralAbstract implements ResolvableInterface
                 $flags[] = '-o';
             }
 
-            $result  = $connection->run('change', $flags)->expandSequences();
-            $spec    = new static($connection);
+            $result = $connection->run('change', $flags)->expandSequences();
+            $spec   = new static($connection);
 
             // if we fetched the default change ensure we have the id default.
             // the id would otherwise be 'new'.
@@ -304,7 +304,6 @@ class Change extends PluralAbstract implements ResolvableInterface
         // perform save.
         $connection = $this->getConnection();
         try {
-
             $flags = array("-i");
             if ($this->fixStatus) {
                 $flags[] = "-s";
@@ -327,9 +326,7 @@ class Change extends PluralAbstract implements ResolvableInterface
             }
 
             $id = $matches[1];
-
         } catch (CommandException $e) {
-
             // if the exception was caused by non-existent jobs, the change should
             // have been created.
             if (preg_match(
@@ -363,7 +360,6 @@ class Change extends PluralAbstract implements ResolvableInterface
             $flags  = $values['Files'];
             array_unshift($flags, "-c", $id);
             $connection->run("reopen", $flags);
-
         }
 
         // Store the retrieved id.
@@ -505,7 +501,6 @@ class Change extends PluralAbstract implements ResolvableInterface
         // handle submitted changes.
         $connection = $this->getConnection();
         if ($this->isSubmitted()) {
-
             // requires force option.
             if (!$force) {
                 throw new Exception(
@@ -611,8 +606,7 @@ class Change extends PluralAbstract implements ResolvableInterface
         // loop options so we accept the last mode
         // and whitespace setting we encounter.
         foreach ($options as $option) {
-            switch ($option)
-            {
+            switch ($option) {
                 case static::RESOLVE_ACCEPT_MERGED:
                     $mode = '-am';
                     break;
@@ -630,8 +624,7 @@ class Change extends PluralAbstract implements ResolvableInterface
                     break;
             }
 
-            switch ($option)
-            {
+            switch ($option) {
                 case static::IGNORE_WHITESPACE_CHANGES:
                     $whitespace = '-db';
                     break;
@@ -1166,7 +1159,7 @@ class Change extends PluralAbstract implements ResolvableInterface
         // if the path is not cached and this change is
         // submitted, use p4 changes data to get path
         if (!array_key_exists('path', $this->cache) && $this->isSubmitted()) {
-            $data = $this->getChangesData();
+            $data                = $this->getChangesData();
             $this->cache['path'] = $data['path'];
         }
 
@@ -1210,7 +1203,7 @@ class Change extends PluralAbstract implements ResolvableInterface
         // if the original id is not cached and this change is
         // submitted, use p4 changes data to get original id
         if (!array_key_exists('oldChange', $this->cache) && $this->isSubmitted()) {
-            $data = $this->getChangesData();
+            $data                     = $this->getChangesData();
             $this->cache['oldChange'] = isset($data['oldChange']) ? $data['oldChange'] : null;
         }
 

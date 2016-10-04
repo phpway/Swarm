@@ -4,7 +4,7 @@ $title  = $isEdit ? 'Project Settings' : 'Add Project';
 $this->headTitle()->set($title);
 
 $canDelete = $this->permissions()->isOne(array('admin', 'member' => $project));
-$baseUrl   = $this->escapeFullUrl($this->basePath());
+$baseUrl   = $this->escapeFullUrl($this->assetBasePath());
 
 // scope name/branches editing restrictions to edit mode only
 $canEditName     = !$isEdit || $canEditName;
@@ -194,7 +194,7 @@ if ($isEdit) {
             <div class="controls">
                 <input class="input-xlarge" type="text" name="jobview" id="jobview"
                        value="<?php echo $this->escapeHtmlAttr($project->getJobview()) ?>"
-                        placeholder="<?php echo $this->te('key=value') ?>">
+                        placeholder="<?php echo $this->te('field=value') ?>">
             </div>
         </div>
         <div class="control-group email-flags">
@@ -329,7 +329,7 @@ if ($isEdit) {
         </div>
         <div class="control-group group-buttons">
             <div class="controls">
-                <button type="submit" class="btn btn-mlarge btn-primary"><?php echo $this->te('Save')?></button>
+                <button type="submit" class="btn btn-mlarge btn-primary btn-save"><?php echo $this->te('Save')?></button>
                 <button type="button" class="btn btn-mlarge" onclick="window.history.back(); return false;"><?php echo $this->te('Cancel')?></button>
                 <?php if ($isEdit && $canDelete): ?>
                 <button type="button" class="btn btn-mlarge btn-danger btn-delete"><?php echo $this->te('Delete')?></button>

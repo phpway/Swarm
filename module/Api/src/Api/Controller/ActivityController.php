@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Api\Controller;
@@ -16,8 +16,8 @@ use Zend\View\Model\JsonModel;
  * Swarm Activity List
  *
  * @SWG\Resource(
- *   apiVersion="v3",
- *   basePath="/api/v3/"
+ *   apiVersion="v4",
+ *   basePath="/api/v4/"
  * )
  */
 class ActivityController extends AbstractApiController
@@ -110,7 +110,7 @@ class ActivityController extends AbstractApiController
      *
      *   ```bash
      *   curl -u "username:password" -d "type=job" -d "user=jira" -d "action=punted" -d "target=review 123" \
-     *        "https://myswarm.url/api/v3/activity"
+     *        "https://myswarm.url/api/v4/activity"
      *   ```
      *
      *   JSON Response:
@@ -154,7 +154,7 @@ class ActivityController extends AbstractApiController
      *        -d "streams[]=review-123" \
      *        -d "link=reviews/123" \
      *        -d "topic=reviews/123" \
-     *        "https://myswarm.url/api/v3/activity"
+     *        "https://myswarm.url/api/v4/activity"
      *   ```
      *
      *   Swarm responds with an activity entity:
@@ -318,7 +318,7 @@ class ActivityController extends AbstractApiController
      *   To get the latest activity entries on a review:
      *
      *   ```bash
-     *   curl -u "username:password" "https://myswarm.url/api/v3/activity?stream=review-1234\
+     *   curl -u "username:password" "https://myswarm.url/api/v4/activity?stream=review-1234\
      *   &fields=id,date,description,type\
      *   &max=2"
      *   ```
@@ -352,7 +352,7 @@ class ActivityController extends AbstractApiController
      *   To get the second page of activity entries for a review (based on the previous example):
      *
      *   ```bash
-     *   curl -u "username:password" "https://myswarm.url/api/v3/activity?stream=review-1234\
+     *   curl -u "username:password" "https://myswarm.url/api/v4/activity?stream=review-1234\
      *   &fields=id,date,description,type\
      *   &max=2\
      *   &lastSeen=9"
@@ -420,18 +420,20 @@ class ActivityController extends AbstractApiController
         $request = $this->getRequest();
         $fields  = $request->getQuery('fields');
         $stream  = $request->getQuery('stream');
+        $version = $this->getEvent()->getRouteMatch()->getParam('version');
 
         $result = $this->forward(
             'Activity\Controller\Index',
             'index',
             null,
             array(
-                'stream'      => $stream,
-                'change'      => $request->getQuery('change'),
-                'type'        => $request->getQuery('type'),
-                'max'         => $request->getQuery('max', 100),
-                'after'       => $request->getQuery('after'),
-                'disableHtml' => true,
+                'stream'               => $stream,
+                'change'               => $request->getQuery('change'),
+                'type'                 => $request->getQuery('type'),
+                'max'                  => $request->getQuery('max', 100),
+                'after'                => $request->getQuery('after'),
+                'disableHtml'          => true,
+                'excludeProjectGroups' => version_compare($version, 'v4', '>='),
             )
         );
 

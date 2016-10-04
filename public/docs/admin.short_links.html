@@ -1,0 +1,154 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <title>Short links // Swarm 2016.2 Guide</title>
+      <meta name="generator" content="DocBook XSL Stylesheets V1.78.1 with Perforce customizations" />
+      <link rel="home" href="copyright.html" title="Swarm 2016.2 Guide" />
+      <link rel="up" href="chapter.administration.html" title="Administration" />
+      <link rel="prev" href="admin.security.html" title="Security" />
+      <link rel="next" href="admin.swarm_root.html" title="swarm_root" />
+      <meta name="Section-title" content="Short links" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.css" />
+      <link rel="stylesheet" href="vendor/prettify/prettify.css" />
+      <link rel="stylesheet" href="css/perforce.css" />
+      <link rel="stylesheet" href="css/print.css" media="print" />
+      <link rel="shortcut icon" href="images/favicon.ico" />
+      <!--[if lt IE 9]>
+  <script type="text/javascript" src="vendor/respond/respond.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/ie.css"/>
+<![endif]-->
+      <link rel="stylesheet" type="text/css" href="css/swarm.css" />
+   </head>
+   <body><a id="page-top"></a><div id="header">
+         <div class="container"><button name="toc" type="button" class="toc"><span class="glyphicon glyphicon-list"></span></button><span class="logo"><a href="http://www.perforce.com/documentation"></a></span><h1><a href="index.html" class="title"><span class="brand"></span><span class="guide-title">Swarm 2016.2 Guide</span><span class="guide-subtitle">
+                                   (September 2016)
+                                 </span></a></h1><button name="search" type="button" class="search" title="Search this guide"><span class="glyphicon glyphicon-search"></span></button></div>
+         <div id="progress"></div>
+      </div>
+      <div id="content" class="content" tabindex="-1">
+         <div class="container">
+            <!---->
+            <div class="section" id="admin.short_links">
+               <div class="titlepage">
+                  <div>
+                     <div>
+                        <h2 class="title" style="clear: both">Short links</h2>
+                     </div>
+                  </div>
+               </div>
+               <p>
+                      <a class="xref" href="basics.notable.html#basics.notable.short_links" title="Short links">Short links</a> work with your Swarm
+                  installation's current hostname, but you have the option of
+                      registering/configuring an even shorter hostname to make shareable
+                      file/directory links as short as possible.
+                    
+               </p>
+               <div class="procedure">
+                  <ol class="procedure" type="1">
+                     <li class="step">
+                        <p>
+                                   Register a short domain name, or if you control your own DNS server, a
+                                   short domain name for your network.
+                                 
+                        </p>
+                     </li>
+                     <li class="step">
+                        <p>
+                                   Point the short domain name at your Swarm host.
+                                 
+                        </p>
+                     </li>
+                     <li class="step">
+                        <p>
+                                   Edit the <code class="filename"><a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/data/config.php</code> file and add the following configuration block:
+                                 
+                        </p><pre lang="php" class="programlisting">
+&lt;?php
+    // this block should be a peer of 'p4'
+    'short_links' =&gt; array(
+        'hostname'  =&gt; '<em class="replaceable"><code>myho.st</code></em>',
+    ),
+</pre><p>
+                                   Replace <em class="replaceable"><code>myho.st</code></em> with the short domain name
+                                   you registered/configured.
+                                 
+                        </p>
+                        <p>
+                                   If your Swarm is configured to use use <a class="xref" href="setup.post.html#setup.post.ssl" title="HTTPS">HTTPS</a>,
+                                   a <a class="link" href="setup.post.html#setup.post.port" title="Run Swarm's virtual host on a custom port">custom port</a>, a
+                                   <a class="link" href="setup.post.html#setup.post.subfolder" title="Run Swarm in a sub-folder of an existing web site">sub-folder</a>, or any
+                                   combination of these custom installation options, the short links
+                                   configuration block should look like:
+                                 
+                        </p><pre lang="php" class="programlisting">
+&lt;?php
+    // this block should be a peer of 'p4'
+    'short_links' =&gt; array(
+      'external_url' =&gt; 'https://<em class="replaceable"><code>myho.st</code></em><em class="replaceable"><code>:port</code></em><em class="replaceable"><code>/sub-folder</code></em>',
+    ),
+</pre><p>
+                                   Replace <em class="replaceable"><code>myho.st</code></em> with the short domain name
+                                   you have registered/configured.
+                                 
+                        </p>
+                        <p>
+                                   If you have not configured Swarm to use HTTPS, replace
+                                   <code class="literal">https://</code> with <code class="literal">http://</code>.
+                                 
+                        </p>
+                        <p>
+                                   If you have configured Swarm to run on a custom port, replace
+                                   <em class="replaceable"><code>:port</code></em> with the correct custom port.
+                                   Otherwise, remove <em class="replaceable"><code>:port</code></em>.
+                                 
+                        </p>
+                        <p>
+                                   If you have configured Swarm to run in a sub-folder, replace
+                                   <em class="replaceable"><code>/sub-folder</code></em> with the correct sub-folder name.
+                                   Otherwise, remove <em class="replaceable"><code>/sub-folder</code></em>.
+                                 
+                        </p>
+                        <div class="important admonition">
+                           <h3 class="title">Important</h3>
+                           <p>
+                                        The <code class="literal">external_url</code> configuration item is only
+                                        honored if you have also configured the
+                                        <code class="literal"><a class="link" href="admin.environment.html#admin.environment.external_url" title="external_url">external_url</a></code>
+                                        item within the
+                                        <code class="literal"><a class="link" href="admin.environment.html" title="Environment">environment</a></code>
+                                        configuration item as well. Otherwise, Swarm could generate short
+                                        links that cannot correctly link to their corresponding full URLs.
+                                      
+                           </p>
+                           <p>
+                                        When <code class="literal">external_url</code> is configured, the
+                                        <code class="literal">hostname</code> configuration item is ignored.
+                                      
+                           </p>
+                        </div>
+                     </li>
+                  </ol>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div id="nav" class="toc"></div>
+      <div id="search">
+         <div class="input"><input id="search-text" type="search" placeholder="Search this guide" /><button name="clear" type="button" class="clear"><span class="glyphicon glyphicon-remove-sign"></span></button></div>
+         <div class="controls">
+            <div class="substring"><label><input type="checkbox" class="substring" name="substring" value="hide" checked="1" /><span class="description">Hide partial matches</span></label></div>
+            <div class="highlighter"><label><input type="checkbox" class="highlight" name="highlight" value="show" checked="1" /><span class="description">Highlight matches</span></label></div>
+         </div>
+         <div class="count"><span class="number">0</span> matching pages
+                  
+         </div>
+         <ul class="results"></ul>
+      </div>
+      <div id="footer">
+         <div class="container"><a accesskey="p" class="nav-prev" title="Press 'p', or left-arrow, to view the previous page" href="admin.security.html"><span class="glyphicon glyphicon-chevron-left"></span><div class="label">Previous</div>
+               <div class="title">Security</div></a><a accesskey="n" class="nav-next" title="Press 'n', or right-arrow, to view the next page" href="admin.swarm_root.html"><span class="glyphicon glyphicon-chevron-right"></span><div class="label">Next</div>
+               <div class="title">swarm_root</div></a></div>
+      </div><script type="text/javascript" src="vendor/jquery/jquery-1.11.3.min.js"></script><script type="text/javascript" src="vendor/bootstrap/js/bootstrap.js"></script><script type="text/javascript" src="vendor/cookie/jquery.cookie.js"></script><script type="text/javascript" src="vendor/highlight/jquery.highlight.js"></script><script type="text/javascript" src="vendor/jsrender/jsrender.js"></script><script type="text/javascript" src="vendor/touchwipe/jquery.touchwipe.min.js"></script><script type="text/javascript" src="vendor/prettify/prettify.js"></script><script defer="1" type="text/javascript" src="js/index.js"></script><script defer="1" type="text/javascript" src="js/toc.js"></script><script defer="1" type="text/javascript" src="js/perforce.js"></script></body>
+</html>

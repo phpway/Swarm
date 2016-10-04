@@ -2,13 +2,14 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace ShortLinks;
 
+use Application\Filter\ExternalUrl;
 use Record\Exception\NotFoundException;
 use ShortLinks\Model\ShortLink;
 use Zend\Mvc\MvcEvent;
@@ -28,7 +29,32 @@ class Module
         $services    = $application->getServiceManager();
         $config      = $services->get('config');
 
-        // nothing to do here if no short-host has been set
+        // normalize and lightly validate the shortlink external_url if one is set.
+        if (!empty($config['short_links']['external_url'])) {
+            // bail if standard host is not defined via an external_url (should not happen)
+            if (empty($config['environment']['external_url'])) {
+                // log a warning and return (it will most likely result in 404)
+                $services->get('logger')->warn(
+                    "Environment external_url must be set if short_links external_url is set."
+                );
+                return;
+            }
+
+            $enforceHttps = isset($config['security']['https_strict']) && $config['security']['https_strict'];
+            $filter       = new ExternalUrl($enforceHttps);
+            $url          = $filter->filter($config['short_links']['external_url']);
+            if (!$url) {
+                throw new \RuntimeException(
+                    'Invalid short_links external_url value in config.php'
+                );
+            }
+
+            $config['short_links']['external_url'] = $url;
+            $config['short_links']['hostname']     = parse_url($url, PHP_URL_HOST);
+            $services->setService('config', $config);
+        }
+
+        // nothing more to do if no short-host has been set
         if (empty($config['short_links']['hostname'])) {
             return;
         }
@@ -42,8 +68,11 @@ class Module
 
         // we should only honor short-links at the root if the request is on the short-host
         // and the short-host differs from the standard host
-        $uri = $application->getRequest()->getUri();
-        if ($uri->getHost() !== $shortHost || $config['environment']['hostname'] === $shortHost) {
+        $uri           = $application->getRequest()->getUri();
+        $isOnShortHost = isset($url) ? stripos($uri->toString(), $url) === 0 : $uri->getHost() === $shortHost;
+        $envUrl        = $config['environment']['external_url'] ?: $config['environment']['hostname'];
+        $shortLinksUrl = $config['short_links']['external_url'] ?: $shortHost;
+        if (!$isOnShortHost || $envUrl === $shortLinksUrl) {
             return;
         }
 

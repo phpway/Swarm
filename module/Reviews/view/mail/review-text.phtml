@@ -6,7 +6,11 @@ $p4Admin  = $services->get('p4_admin');
 $review   = $event->getParam('review');
 $change   = P4\Spec\Change::fetch($review->getHeadChange(), $p4Admin);
 $shelf    = $review->getId() === $change->getId() ? $change : P4\Spec\Change::fetch($review->getId(), $p4Admin);
-$projects = $this->projectList($event->getParam('review')->getProjects(), null, array('noLink' => true));
+$projects = $this->projectList(
+    $event->getParam('review')->getProjects(),
+    null,
+    array('noLink' => true, 'hidePrivate' => true)
+);
 
 echo trim($activity->get('user') . ' ' . $this->t($activity->get('action')) . ' ' . $activity->get('target'));
 

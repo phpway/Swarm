@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace ShortLinks\Controller;
@@ -67,10 +67,25 @@ class IndexController extends AbstractActionController
             // if we have a short host, use it and put the link id at the root
             // otherwise, just use short-link route on the standard host
             $id        = $link->getObfuscatedId();
-            $shortHost = !empty($config['short_links']['hostname']) ? $config['short_links']['hostname'] : null;
-            $uri       = $shortHost
-                ? 'http://' . $shortHost . $config['environment']['base_url'] . '/' . $id
-                : trim($qualify('short-link', array('link' => $id)), '/');
+            $shortHost = !empty($config['short_links']['hostname'])     ? $config['short_links']['hostname']     : null;
+            $origin    = !empty($config['short_links']['external_url']) ? $config['short_links']['external_url'] : null;
+            if ($origin) {
+                $uri = $origin . $config['environment']['base_url'] . '/' . $id;
+            } else {
+                $strict = isset($config['security']['https_strict']) && $config['security']['https_strict'];
+                $uri    = $services->get('request')->getUri();
+                $scheme = $strict ? 'https' : ($uri->getScheme() ?: 'http');
+                $port   = $uri->getPort() ?: ($scheme == 'https' ? 443 : 80);
+                $port   = $scheme == 'https'
+                    && isset($config['security']['https_port']) && $config['security']['https_port']
+                    ? $config['security']['https_port']
+                    : $port;
+
+                $uri = $shortHost
+                    ? $scheme . '://' . $shortHost . ($port && $port != 80 && $port != 443 ? ':' . $port : '')
+                        . $config['environment']['base_url'] . '/' . $id
+                    : trim($qualify('short-link', array('link' => $id)), '/');
+            }
 
             return new JsonModel(
                 array(

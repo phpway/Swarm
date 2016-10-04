@@ -1,0 +1,262 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <title>Swarm API // Swarm 2016.2 Guide</title>
+      <meta name="generator" content="DocBook XSL Stylesheets V1.78.1 with Perforce customizations" />
+      <link rel="home" href="copyright.html" title="Swarm 2016.2 Guide" />
+      <link rel="up" href="copyright.html" title="Swarm 2016.2 Guide" />
+      <link rel="prev" href="extending.clients.html" title="CSS &amp; JavaScript" />
+      <link rel="next" href="api.endpoints.html" title="API Endpoints" />
+      <meta name="Section-title" content="Swarm API" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.css" />
+      <link rel="stylesheet" href="vendor/prettify/prettify.css" />
+      <link rel="stylesheet" href="css/perforce.css" />
+      <link rel="stylesheet" href="css/print.css" media="print" />
+      <link rel="shortcut icon" href="images/favicon.ico" />
+      <!--[if lt IE 9]>
+  <script type="text/javascript" src="vendor/respond/respond.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/ie.css"/>
+<![endif]-->
+      <link rel="stylesheet" type="text/css" href="css/swarm.css" />
+   </head>
+   <body><a id="page-top"></a><div id="header">
+         <div class="container"><button name="toc" type="button" class="toc"><span class="glyphicon glyphicon-list"></span></button><span class="logo"><a href="http://www.perforce.com/documentation"></a></span><h1><a href="index.html" class="title"><span class="brand"></span><span class="guide-title">Swarm 2016.2 Guide</span><span class="guide-subtitle">
+                                   (September 2016)
+                                 </span></a></h1><button name="search" type="button" class="search" title="Search this guide"><span class="glyphicon glyphicon-search"></span></button></div>
+         <div id="progress"></div>
+      </div>
+      <div id="content" class="content" tabindex="-1">
+         <div class="container">
+            <!---->
+            <div class="chapter" id="api">
+               <div class="titlepage">
+                  <div>
+                     <div>
+                        <h1 class="title">Swarm API</h1>
+                     </div>
+                  </div>
+               </div>
+               <p>This chapter describes the REST-like API provided by Swarm, which can be used to
+                  automate common Swarm interactions or integrate with external systems.
+               </p>
+               <h2 id="api.authentication">Authentication</h2>
+               <p>Swarm’s API requires an authenticated connection for all data-modifying
+                  endpoints. Authenticated connections are achieved using HTTP Basic Access
+                  Authentication.
+               </p>
+               <div class="note admonition">
+                  <h3 class="title">Note</h3>
+                  <p>If the <a class="link" href="admin.security.html#admin.security.require_login" title="Require login"><code class="literal">require_login</code></a> configuration flag
+                     is set to <code class="literal">true</code>, all API endpoints require authentication.
+                  </p>
+               </div>
+               <p>For example:</p><pre lang="bash" class="programlisting">$ <code class="literal"><span class="strong"><strong>curl -u "<span class="emphasis"><em>apiuser</em></span>:<span class="emphasis"><em>password</em></span>" https://<span class="emphasis"><em>myswarm.url</em></span>/api/v4/projects</strong></span></code></pre><p>Swarm accepts a ticket from the Helix Versioning Engine, which is either
+                  host-unlocked or locked to the Swarm host. It may also be possible to use a
+                  password in place of the ticket.
+               </p>
+               <p>To acquire a ticket, run the following command:</p><pre lang="bash" class="programlisting">$ <code class="literal"><span class="strong"><strong>p4 -p <span class="emphasis"><em>myp4host:1666</em></span> -u <span class="emphasis"><em>apiuser</em></span> login -p</strong></span></code></pre><p>To acquire a host-unlocked ticket, run the following command:</p><pre lang="bash" class="programlisting">$ <code class="literal"><span class="strong"><strong>p4 -p <span class="emphasis"><em>myp4host:1666</em></span> -u <span class="emphasis"><em>apiuser</em></span> login -ap</strong></span></code></pre><div class="important admonition">
+                  <h3 class="title">Important</h3>
+                  <p>For a Helix Versioning Engine that has been configured for security level
+                     3, passwords are not accepted.
+                  </p>
+                  <p>For more information on security levels, see:<br />
+                     <a class="link" href="https://www.perforce.com/perforce/doc.current/manuals/p4sag/chapter.superuser.html#DB5-49899" target="_top">Helix
+                        Versioning Engine Administrator Guide: Fundamentals</a></p>
+               </div>
+               <div class="note admonition">
+                  <h3 class="title">Note</h3>
+                  <p>If you use a ticket to authenticate against the Swarm API and the ticket
+                     expires, you need to acquire a new ticket to continue using the API.
+                  </p>
+               </div>
+               <p>If you make a request that requires authentication and you have not
+                  authenticated, the response is:
+               </p><pre lang="json" class="programlisting">{
+  "error": "Unauthorized"
+}</pre><h2 id="_requests">Requests</h2>
+               <p>Swarm’s API includes endpoints that provide, create, and update information
+                  within Swarm.
+               </p>
+               <p>If you make a request against an endpoint that is not supported, the
+                  response is:
+               </p><pre lang="bash" class="programlisting">{
+  "error": "Method Not Allowed"
+}</pre><h3 id="_get_information">GET information</h3>
+               <p>Use HTTP &lt;literal&gt;GET&lt;/literal&gt; requests to ask for information from the API.</p>
+               <p>For example, to get the list of reviews:</p><pre lang="bash" class="programlisting">$ <code class="literal"><span class="strong"><strong>curl https://<span class="emphasis"><em>myswarm.url</em></span>/api/v4/reviews</strong></span></code></pre><p>Certain API calls support a <code class="literal">fields</code> parameter that allows you to specify which
+                  fields to include in the response, enabling more compact data sets. The
+                  following endpoints support fields:
+               </p>
+               <div class="itemizedlist">
+                  <ul class="itemizedlist" style="list-style-type: disc; ">
+                     <li class="listitem"><code class="literal">/api/v4/projects</code></li>
+                     <li class="listitem"><code class="literal">/api/v4/reviews</code></li>
+                     <li class="listitem"><code class="literal">/api/v4/reviews/{id}</code></li>
+                  </ul>
+               </div>
+               <p>Fields can be expressed as a comma-separated list, or using array-notation. For
+                  example:
+               </p><pre lang="bash" class="programlisting">$ <code class="literal"><span class="strong"><strong>curl 'https://<span class="emphasis"><em>myswarm.url</em></span>/api/v4/reviews?fields=id,description,participants'</strong></span></code></pre><p>Or:</p><pre lang="bash" class="programlisting">$ <code class="literal"><span class="strong"><strong>curl 'https://<span class="emphasis"><em>myswarm.url</em></span>/api/v4/reviews?fields[]=id,fields[]=description,fields[]=participants'</strong></span></code></pre><h3 id="_post_new_information">POST new information</h3>
+               <p>Use HTTP &lt;literal&gt;POST&lt;/literal&gt; requests to create information via the API.</p>
+               <p>For example, to create a review using form-encoded values:</p><pre lang="bash" class="programlisting">$ <code class="literal"><span class="strong"><strong>curl -u "<span class="emphasis"><em>apiuser</em></span>:<span class="emphasis"><em>password</em></span>" -d"change=<span class="emphasis"><em>12345</em></span>" https://<span class="emphasis"><em>myswarm.url</em></span>/api/v4/reviews</strong></span></code></pre><p>The response should be similar to:</p><pre class="screen">{
+  "isValid": true,
+  "id": 12206
+}</pre><p>To create a review using JSON:</p><pre lang="bash" class="programlisting">$ <code class="literal"><span class="strong"><strong>curl -u "<span class="emphasis"><em>apiuser</em></span>:<span class="emphasis"><em>password</em></span>" -H "Content-type: application/json" \
+  -d'{"change": <span class="emphasis"><em>12345</em></span>}' https://<span class="emphasis"><em>myswarm.url</em></span>/api/v4/reviews</strong></span></code></pre><h3 id="_update">Update</h3>
+               <p>Use HTTP &lt;literal&gt;PATCH&lt;/literal&gt; requests to update information via the API.</p>
+               <p>If your HTTP client does not support <code class="literal">PATCH</code> requests, you can emulate this
+                  behavior by submitting an HTTP <code class="literal">POST</code> with a <code class="literal">"?_method=PATCH"</code> parameter.
+               </p>
+               <h2 id="_pagination">Pagination</h2>
+               <p>Most Swarm endpoints that provide data include the ability to paginate their
+                  results.
+               </p>
+               <p>Each time data is requested, up to <code class="literal">max</code> results are included in the
+                  response, as is a value called <code class="literal">lastSeen</code>. <code class="literal">lastSeen</code> identifies the <code class="literal">id</code> of the
+                  last entry included in the results. If there are no further results, <code class="literal">lastSeen</code>
+                  is <code class="literal">null</code>.
+               </p>
+               <p>To get the next set of results, include <code class="literal">after</code> set to the value of <code class="literal">lastSeen</code>
+                  in the API request. Entries up to and including the <code class="literal">id</code> specified by <code class="literal">after</code> are
+                  excluded from the response, and the next <code class="literal">max</code> entries are included.
+               </p>
+               <p>See the
+                  <a class="link" href="api.endpoints.html#api.endpoints.Activity.listActivity.usageExamples" title="Examples of usage">Activity endpoint</a> for
+                  example usage that demonstrates pagination.
+               </p>
+               <h2 id="_responses">Responses</h2>
+               <p>Swarm’s API responses are JSON formatted.</p>
+               <h2 id="_api_versions">API versions</h2>
+               <p>The current Swarm API version is <code class="literal">v4</code>. Here is a list of historical API
+                  versions:
+               </p>
+               <div class="informaltable">
+                  <table>
+                     <colgroup>
+                        <col width="16%" class="col_1" />
+                        <col width="17%" class="col_2" />
+                        <col width="16%" class="col_3" />
+                        <col width="51%" class="col_4" />
+                     </colgroup>
+                     <thead>
+                        <tr>
+                           <th align="left" valign="top">API version</th>
+                           <th align="left" valign="top">Swarm Release</th>
+                           <th align="left" valign="top">Date</th>
+                           <th align="left" valign="top">Description</th>
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr>
+                           <td align="left" valign="top">
+                              <p>v4</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>2016.2</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>September 2016</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>Include support for private projects, as well as file-level and line-level
+                                   inline comments.
+                              </p>
+                           </td>
+                        </tr>
+                        <tr>
+                           <td align="left" valign="top">
+                              <p>v3</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>2016.1 SP1</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>September 2016</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>Include new endpoint for comments.</p>
+                           </td>
+                        </tr>
+                        <tr>
+                           <td align="left" valign="top">
+                              <p>v2</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>2016.1</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>May 2016</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>Include new endpoints for projects, groups, etc.</p>
+                           </td>
+                        </tr>
+                        <tr>
+                           <td align="left" valign="top">
+                              <p>v1.2</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>2015.3</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>October 2015</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>Add author filter to the list reviews endpoint.</p>
+                           </td>
+                        </tr>
+                        <tr>
+                           <td align="left" valign="top">
+                              <p>v1.1</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>2014.4</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>January 2015</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>Addition of required reviewers, and <code class="literal">apiVersions</code>.
+                              </p>
+                           </td>
+                        </tr>
+                        <tr>
+                           <td align="left" valign="top">
+                              <p>v1</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>2014.3</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>July 2014</p>
+                           </td>
+                           <td align="left" valign="top">
+                              <p>Initial release.</p>
+                           </td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div id="nav" class="toc"></div>
+      <div id="search">
+         <div class="input"><input id="search-text" type="search" placeholder="Search this guide" /><button name="clear" type="button" class="clear"><span class="glyphicon glyphicon-remove-sign"></span></button></div>
+         <div class="controls">
+            <div class="substring"><label><input type="checkbox" class="substring" name="substring" value="hide" checked="1" /><span class="description">Hide partial matches</span></label></div>
+            <div class="highlighter"><label><input type="checkbox" class="highlight" name="highlight" value="show" checked="1" /><span class="description">Highlight matches</span></label></div>
+         </div>
+         <div class="count"><span class="number">0</span> matching pages
+                  
+         </div>
+         <ul class="results"></ul>
+      </div>
+      <div id="footer">
+         <div class="container"><a accesskey="p" class="nav-prev" title="Press 'p', or left-arrow, to view the previous page" href="extending.clients.html"><span class="glyphicon glyphicon-chevron-left"></span><div class="label">Previous</div>
+               <div class="title">CSS &amp; JavaScript</div></a><a accesskey="n" class="nav-next" title="Press 'n', or right-arrow, to view the next page" href="api.endpoints.html"><span class="glyphicon glyphicon-chevron-right"></span><div class="label">Next</div>
+               <div class="title">API Endpoints</div></a></div>
+      </div><script type="text/javascript" src="vendor/jquery/jquery-1.11.3.min.js"></script><script type="text/javascript" src="vendor/bootstrap/js/bootstrap.js"></script><script type="text/javascript" src="vendor/cookie/jquery.cookie.js"></script><script type="text/javascript" src="vendor/highlight/jquery.highlight.js"></script><script type="text/javascript" src="vendor/jsrender/jsrender.js"></script><script type="text/javascript" src="vendor/touchwipe/jquery.touchwipe.min.js"></script><script type="text/javascript" src="vendor/prettify/prettify.js"></script><script defer="1" type="text/javascript" src="js/index.js"></script><script defer="1" type="text/javascript" src="js/toc.js"></script><script defer="1" type="text/javascript" src="js/perforce.js"></script></body>
+</html>

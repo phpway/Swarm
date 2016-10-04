@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2016 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Api\Controller;
@@ -17,8 +17,8 @@ use Zend\View\Model\JsonModel;
  * Swarm Groups
  *
  * @SWG\Resource(
- *   apiVersion="v3",
- *   basePath="/api/v3/"
+ *   apiVersion="v4",
+ *   basePath="/api/v4/"
  * )
  */
 class GroupsController extends AbstractApiController
@@ -76,7 +76,7 @@ class GroupsController extends AbstractApiController
      *
      *   ```bash
      *   curl -u "username:password" \
-     *        "https://myswarm.url/api/v3/groups?keywords=test-group&fields=Group,Owners,Users,config&max=2"
+     *        "https://myswarm.url/api/v4/groups?keywords=test-group&fields=Group,Owners,Users,config&max=2"
      *   ```
      *
      *   Swarm responds with a list of groups:
@@ -119,7 +119,7 @@ class GroupsController extends AbstractApiController
      *
      *   ```bash
      *   curl -u "username:password" \
-     *        "https://myswarm.url/api/v3/groups?keywords=test-group&fields=Group,config&max=2&lastSeen=test-group2"
+     *        "https://myswarm.url/api/v4/groups?keywords=test-group&fields=Group,config&max=2&lastSeen=test-group2"
      *   ```
      *
      *   Swarm responds with a list of groups (minus the Owners and Users fields, as we haven't requested them):
@@ -221,7 +221,7 @@ class GroupsController extends AbstractApiController
      *   To fetch an individual group:
      *
      *   ```bash
-     *   curl -u "username:password" "https://myswarm.url/api/v3/groups/my-group"
+     *   curl -u "username:password" "https://myswarm.url/api/v4/groups/my-group"
      *   ```
      *
      *   Swarm responds with the group entity:
@@ -252,7 +252,7 @@ class GroupsController extends AbstractApiController
      *   To limit the returned fields when fetching an individual group:
      *
      *   ```bash
-     *   curl -u "username:password" "https://myswarm.url/api/v3/groups/my-group?fields=Group,Owners,Users,config"
+     *   curl -u "username:password" "https://myswarm.url/api/v4/groups/my-group?fields=Group,Owners,Users,config"
      *   ```
      *
      *   Swarm responds with the group entity:
@@ -405,7 +405,7 @@ class GroupsController extends AbstractApiController
      *        -d "config[name]=My Group" \
      *        -d "config[emailFlags][reviews]=1" \
      *        -d "config[emailFlags][commits]=0" \
-     *        "https://myswarm.url/api/v3/groups"
+     *        "https://myswarm.url/api/v4/groups"
      *   ```
      *
      *   Assuming that the authenticated user has permission, Swarm responds with the new group entity:
@@ -559,7 +559,7 @@ class GroupsController extends AbstractApiController
      *        -d "config[description]=This group is special to me." \
      *        -d "config[name]=My Group" \
      *        -d "config[emailFlags][commits]=1" \
-     *        "https://myswarm.url/api/v3/groups/my-group"
+     *        "https://myswarm.url/api/v4/groups/my-group"
      *   ```
      *
      *   Assuming that the authenticated user has permission, Swarm
@@ -641,7 +641,7 @@ class GroupsController extends AbstractApiController
      *   Only _super_ users and group owners can delete groups.
      *
      *   ```bash
-     *   curl -u "username:password" -X DELETE "https://myswarm.url/api/v3/groups/my-group"
+     *   curl -u "username:password" -X DELETE "https://myswarm.url/api/v4/groups/my-group"
      *   ```
      *
      *   Assuming that the authenticated user has permission, Swarm

@@ -43,13 +43,13 @@ $this->headTitle()->set($this->t("Change") . ' ' . $change->getId())->setTransla
                         }
                         ?>
                     </div>
-                    <?php if ($review): ?>
+                    <?php if ($review && $review !== 'private'): ?>
                         <a href="<?php echo $this->url('review', array('review' => $review->getId())) ?>"
                            class="btn btn-small btn-success pull-right">
                             <i class="icon-user icon-white"></i>
                             <span class="text"><?php echo $this->te("View Review")?></span>
                         </a>
-                    <?php else: ?>
+                    <?php elseif ($canRequestReview): ?>
                         <a href="#" <?php echo !$isRemoteShelf ? 'onclick="return swarm.review.add(this);"' : '' ?>
                            class="privileged btn btn-small btn-primary pull-right <?php echo $isRemoteShelf ? 'disabled' : '' ?>">
                             <i class="icon-user icon-white"></i>

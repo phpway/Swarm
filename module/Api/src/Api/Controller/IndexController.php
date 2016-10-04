@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Api\Controller;
@@ -16,8 +16,8 @@ use Zend\View\Model\JsonModel;
  * Basic API controller providing a simple version action
  *
  * @SWG\Resource(
- *   apiVersion="v3",
- *   basePath="/api/v3/"
+ *   apiVersion="v4",
+ *   basePath="/api/v4/"
  * )
  */
 class IndexController extends AbstractApiController
@@ -63,7 +63,7 @@ class IndexController extends AbstractApiController
 
         // include a list of supported api versions for v1.1 and up
         if ($this->getEvent()->getRouteMatch()->getParam('version') !== "v1") {
-            $data['apiVersions'] = array(1.0, 1.1, 1.2, 2.0, 3.0);
+            $data['apiVersions'] = array(1.0, 1.1, 1.2, 2.0, 3.0, 4.0);
         }
 
         return new JsonModel($this->sortEntityFields($data));

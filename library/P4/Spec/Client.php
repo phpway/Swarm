@@ -2,9 +2,9 @@
 /**
  * Abstracts operations against Perforce clients/workspaces.
  *
- * @copyright   2011 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  * @todo        Add support for 'p4 opened'
  * @todo        Deal with converting updated/created date/times from listing format
  * @todo        Return DateTime objects as appropriate

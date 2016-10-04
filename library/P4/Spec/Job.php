@@ -2,8 +2,8 @@
 /**
  * Abstracts operations against Perforce jobs.
  *
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  * @todo        Add support for the following commands:
  *              fix
  *              fixes

@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 // enable profiling if xhprof is present
@@ -22,14 +22,8 @@ define(
 );
 
 // detect a multi-p4-server setup and select which one to use
-detectP4Server();
-
-// in a multi-p4-server setup the DATA_PATH is BASE_DATA_PATH/servers/P4_SERVER_ID
-// this isolates each server's data so that files do not collide and conflict
-define(
-    'DATA_PATH',
-    rtrim(BASE_DATA_PATH . '/' . (P4_SERVER_ID ? 'servers/' . P4_SERVER_ID : ''), '/\\')
-);
+require_once __DIR__ . '/../module/Application/SwarmFunctions.php';
+\Application\SwarmFunctions::configureEnvironment(BASE_DATA_PATH);
 
 // sanity check things first
 sanityCheck();
@@ -87,8 +81,9 @@ function sanityCheck()
     $numPhpIssues = $badPhp + $noP4php + $noIconv + $noJson + $noSession;
     $badDataDir   = !$badP4dId && !is_writeable(DATA_PATH);
     $noConfig     = !file_exists($config);
+    $configErrors = $noConfig ? array() : (array) checkConfig($config);
     $threadSafe   = defined('ZEND_THREAD_SAFE') ? ZEND_THREAD_SAFE : false;
-    $numIssues    = $numPhpIssues + $badDataDir + $noConfig + $threadSafe + $badP4dId;
+    $numIssues    = $numPhpIssues + $badDataDir + $noConfig + $threadSafe + $badP4dId + count($configErrors);
 
     // if anything is misconfigured, compose error page and then die
     if ($numIssues) {
@@ -97,19 +92,20 @@ function sanityCheck()
             . '<p>Problem' . ($numIssues > 1 ? 's' : '') . ' detected:</p>';
 
         // compose message per condition
-        $html                .= '<ul>';
-        $badPhp     && $html .= '<li>Swarm requires PHP 5.3.3 or higher; you have ' . $e(PHP_VERSION) . '.</li>';
-        $noP4php    && $html .= '<li>The Perforce PHP extension (P4PHP) is not installed or enabled.</li>';
-        $noIconv    && $html .= '<li>The iconv PHP extension is not installed or enabled.</li>';
-        $noJson     && $html .= '<li>The json PHP extension is not installed or enabled.</li>';
-        $noSession  && $html .= '<li>The session PHP extension is not installed or enabled.</li>';
-        $badDataDir && $html .= '<li>The data directory (' . $e(DATA_PATH) . ') is not writeable.</li>';
-        $noConfig   && $html .= '<li>Swarm configuration file does not exist (' . $e($config) . ').</li>';
-        $threadSafe && $html .= '<li>Thread-safe PHP detected -- Swarm does not support running with thread-safe PHP.'
+        $html                  .= '<ul>';
+        $badPhp       && $html .= '<li>Swarm requires PHP 5.3.3 or higher; you have ' . $e(PHP_VERSION) . '.</li>';
+        $noP4php      && $html .= '<li>The Perforce PHP extension (P4PHP) is not installed or enabled.</li>';
+        $noIconv      && $html .= '<li>The iconv PHP extension is not installed or enabled.</li>';
+        $noJson       && $html .= '<li>The json PHP extension is not installed or enabled.</li>';
+        $noSession    && $html .= '<li>The session PHP extension is not installed or enabled.</li>';
+        $badDataDir   && $html .= '<li>The data directory (' . $e(DATA_PATH) . ') is not writeable.</li>';
+        $noConfig     && $html .= '<li>Swarm configuration file does not exist (' . $e($config) . ').</li>';
+        $threadSafe   && $html .= '<li>Thread-safe PHP detected -- Swarm does not support running with thread-safe PHP.'
             . ' To remedy, install or rebuild a non-thread-safe variant of PHP and Apache (prefork).</li>';
-        $badP4dId   && $html .= '<li>The Perforce server name (' . $e(P4_SERVER_ID) . ') contains invalid characters.'
+        $badP4dId     && $html .= '<li>The Perforce server name (' . $e(P4_SERVER_ID) . ') contains invalid characters.'
             . ' Perforce server names may only contain alphanumeric characters, hyphens and underscores.</li>';
-        $html                .= '</ul>';
+        $configErrors && $html .= '<li>' . implode('</li></li>', $configErrors) . '</li>';
+        $html                  .= '</ul>';
 
         // display further information if there were any PHP issues
         if ($numPhpIssues) {
@@ -146,39 +142,47 @@ function sanityCheck()
     }
 }
 
-function detectP4Server()
+function checkConfig($configPath)
 {
-    // any sub-array under 'p4' with a port element enables multi-p4-server mode
-    $config  = BASE_DATA_PATH . '/config.php';
-    $config  = file_exists($config) ? include $config : null;
-    $servers = array_filter(
-        isset($config['p4']) ? (array) $config['p4'] : array(),
-        function ($item) {
-            return is_array($item) && isset($item['port']);
-        }
-    );
-
-    // early exit if we do not have multiple p4 servers
-    define('MULTI_P4_SERVER', (bool) $servers);
-    define('P4_SERVER_VALID_IDS', serialize(array_keys($servers)));
-    if (!MULTI_P4_SERVER) {
-        define('P4_SERVER_ID', null);
-        return;
+    // if config file doesn't exist, just return (we handle that error elsewhere)
+    if (!file_exists($configPath)) {
+        return null;
     }
 
-    // as we have multiple p4 servers, we need the request uri to pick one
-    // the first path component of the URI tells us which server to select
-    if (isset($_SERVER['HTTP_X_REWRITE_URL'])) {
-        $requestUri = $_SERVER['HTTP_X_REWRITE_URL'];
-    } elseif (isset($_SERVER['REQUEST_URI'])) {
-        $requestUri = $_SERVER['REQUEST_URI'];
-    } else {
-        $requestUri = '/';
+    // bail early if config is not an array
+    $config = include $configPath;
+    if (!is_array($config)) {
+        return array('Swarm configuration file must return an array.');
     }
 
-    // strip origin and extract first path component
-    $requestUri = preg_replace('#^[^/:]+://[^/]+#', '', $requestUri);
-    $firstPath  = preg_replace('#^/?([^/?]*).*#', '$1', $requestUri);
+    $errors         = array();
+    $urlShortLinks  = getConfigValue($config, array('short_links', 'external_url'));
+    $urlEnvironment = getConfigValue($config, array('environment', 'external_url'));
 
-    define('P4_SERVER_ID', array_key_exists($firstPath, $servers) ? $firstPath : null);
+    // ensure environment/short-links urls look ok and include valid scheme
+    if ($urlEnvironment && !in_array(parse_url($urlEnvironment, PHP_URL_SCHEME), array('http', 'https'))) {
+        $errors[] = 'Invalid value in [environment][external_url] config option.';
+    }
+    if ($urlShortLinks && !in_array(parse_url($urlShortLinks, PHP_URL_SCHEME), array('http', 'https'))) {
+        $errors[] = 'Invalid value in [short_links][external_url] config option.';
+    }
+
+    // ensure valid short_links configuration
+    if (strlen($urlShortLinks) && !$urlEnvironment) {
+        $errors[] = 'Config option [environment][external_url] must be set if [short_links][external_url] is set.';
+    }
+
+    return $errors;
+}
+
+// helper function to return config value for a specified options path
+// if config has no value for the given path, return null
+function getConfigValue(array $config, array $optionsPath)
+{
+    $value = $config;
+    foreach ($optionsPath as $option) {
+        $value = isset($value[$option]) ? $value[$option] : null;
+    }
+
+    return $value;
 }

@@ -1,0 +1,325 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <title>Extended API example // Swarm 2016.2 Guide</title>
+      <meta name="generator" content="DocBook XSL Stylesheets V1.78.1 with Perforce customizations" />
+      <link rel="home" href="copyright.html" title="Swarm 2016.2 Guide" />
+      <link rel="up" href="api.html" title="Swarm API" />
+      <link rel="prev" href="api.endpoints.html" title="API Endpoints" />
+      <link rel="next" href="contact.html" title="Contact Perforce" />
+      <meta name="Section-title" content="Extended API example" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.css" />
+      <link rel="stylesheet" href="vendor/prettify/prettify.css" />
+      <link rel="stylesheet" href="css/perforce.css" />
+      <link rel="stylesheet" href="css/print.css" media="print" />
+      <link rel="shortcut icon" href="images/favicon.ico" />
+      <!--[if lt IE 9]>
+  <script type="text/javascript" src="vendor/respond/respond.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/ie.css"/>
+<![endif]-->
+      <link rel="stylesheet" type="text/css" href="css/swarm.css" />
+   </head>
+   <body><a id="page-top"></a><div id="header">
+         <div class="container"><button name="toc" type="button" class="toc"><span class="glyphicon glyphicon-list"></span></button><span class="logo"><a href="http://www.perforce.com/documentation"></a></span><h1><a href="index.html" class="title"><span class="brand"></span><span class="guide-title">Swarm 2016.2 Guide</span><span class="guide-subtitle">
+                                   (September 2016)
+                                 </span></a></h1><button name="search" type="button" class="search" title="Search this guide"><span class="glyphicon glyphicon-search"></span></button></div>
+         <div id="progress"></div>
+      </div>
+      <div id="content" class="content" tabindex="-1">
+         <div class="container">
+            <!---->
+            <div class="section" id="api.example">
+               <div class="titlepage">
+                  <div>
+                     <div>
+                        <h2 class="title" style="clear: both">Extended API example</h2>
+                     </div>
+                  </div>
+               </div>
+               <p>This section includes an extended API example, involving multiple API calls to
+                  answer a more complicated kind of question than any single API endpoint can
+                  provide: which reviews does a specific userid need to attend to?
+               </p>
+               <div class="section" id="api.example.code">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">The code</h3>
+                        </div>
+                     </div>
+                  </div><pre lang="php" class="programlisting">&lt;?php
+/**
+ * vim:set ai si et ts=4 sw=4 syntax=php:
+ *
+ * reviews.php
+ *
+ * Queries the Swarm API and reports which reviews a specified user
+ * needs to attend to.
+ *
+ * Required attention is determined by the following criteria:
+ * - the user is a participant in a review
+ * - and the user has not voted on the review
+ * - and the user has not commented on the review
+ * - or the user's comment on the review is a
+ *   task that has been addressed and needs verification
+ */
+
+if (ini_set('track_errors', 1) === false) {
+    echo "Warning: unable to track errors.\n";
+}
+
+# process command-line arguments
+$options = getopt(
+    'hs:r:v',
+    array('help', 'swarm:', 'reviewer', 'verbose')
+);
+
+$swarm = '';
+if (isset($options['s'])) {
+    $swarm = $options['s'];
+}
+if (isset($options['swarm'])) {
+    $swarm = $options['swarm'];
+}
+if (!$swarm) {
+    usage('Swarm API URL not provided.');
+}
+
+$reviewer = '';
+if (isset($options['r'])) {
+    $reviewer = $options['r'];
+}
+if (isset($options['reviewer'])) {
+    $reviewer = $options['reviewer'];
+}
+if (!$reviewer) {
+    usage('Swarm reviewer not provided.');
+}
+
+$verbose = false;
+if (isset($options['v']) || isset($options['verbose'])) {
+    $verbose = true;
+}
+
+if (isset($options['h']) || isset($options['help'])) {
+    usage();
+}
+
+function usage($message = null)
+{
+    if ($message) {
+        echo "$message\n\n";
+    }
+
+    $script = basename(__FILE__);
+    echo &lt;&lt;&lt;EOU
+$script: -s &lt;Swarm URL&gt; -u &lt;API userid&gt; -p &lt;API user's password&gt; \
+  -r &lt;reviewer userid to report on&gt; -h
+
+-s|--swarm     Swarm's URL (e.g. https://user@password:myswarm.url/)
+-r|--reviewer  The reviewer to report on.
+-h|--help      This help text.
+-v|--verbose   Verbose output.
+
+This script queries the Swarm API and reports on reviews that the
+specified user needs to attend to.
+
+Note: If your Helix Versioning Engine (p4d) has security level 3 set, you
+cannot use a password to authenticate; you must acquire a host-unlocked
+ticket from p4d, and use the ticket in place of a password when
+communicating with the Swarm API connected to p4d.
+
+EOU;
+    exit;
+}
+
+function msg($message)
+{
+    global $verbose;
+
+    if ($verbose) {
+        echo $message;
+    }
+}
+
+function call_api($url, $params)
+{
+    global $php_errormsg;
+
+    $query    = http_build_query($params);
+    $request  = $url . '?' . $query;
+    $response = @file_get_contents($request);
+    if ($php_errormsg) {
+        echo "Unable to call api: $php_errormsg\n";
+        exit;
+    }
+
+    $json = @json_decode($response, true);
+    if ($php_errormsg) {
+        echo "Unable to decode api response: $php_errormsg\n";
+        exit;
+    }
+
+    return $json;
+}
+
+# remove trailing / from URL, if it exists
+$swarm = rtrim(trim($swarm), '/');
+
+# fetch the list of reviews
+$reviews = call_api(
+    "$swarm/api/v4/reviews",
+    array(
+        'hasReviewers' =&gt; 1, # only reviews with participants
+        'participants' =&gt; array($reviewer), # only review for this reviewer
+        'max'          =&gt; 9, # get plenty of reviews, if available
+        'fields'       =&gt; array('id', 'description', 'commits'), # get these fields
+    )
+);
+
+$report = array();
+foreach ($reviews['reviews'] as $review) {
+    if (is_null($review)) {
+        continue;
+    }
+
+    $flag = false;
+    msg('Review: ' . $review['id'] . ' ');
+
+    # if the review is already committed, it likely does not need attention
+    if (array_key_exists('commits', $review)
+        &amp;&amp; count($review['commits'])
+    ) {
+        msg("is committed, skipping...\n");
+        continue;
+    }
+
+    # if the review has a vote from the reviewer, they are already aware
+    if (array_key_exists('participants', $review)
+        &amp;&amp; array_key_exists('vote', $review['participants'][$reviewer])
+    ) {
+        msg("has vote from reviewer, skipping...\n");
+        continue;
+    }
+
+    # if there are no open comments on the review, the reviewer's
+    # attention is required
+    if (array_key_exists('comments', $review)
+        &amp;&amp; $review['comments'][0] == 0
+    ) {
+        msg("has no open comments, skipping...\n");
+        continue;
+    }
+
+    # fetch the comments for this review
+    $comments = call_api(
+        "$swarm/api/v4/comments",
+        array(
+            'topic' =&gt; 'reviews/' . $review['id'], # comments for this review
+            'max'   =&gt; 9, # get plenty of comments, if available
+        )
+    );
+
+    foreach ($comments['comments'] as $comment) {
+        msg("\n  Comment: " . $comment['id'] . ' ');
+
+        // skip over comments from other reviewers
+        if (array_key_exists('user', $comment) &amp;&amp; $reviewer != $comment['user']) {
+            msg("is by another user, carry on...\n");
+            continue;
+        }
+
+        # skip archived comments
+        if (array_key_exists('flags', $comment)
+            &amp;&amp; count($comment['flags']) &gt; 0
+            &amp;&amp; $comment['flags'][0] == 'closed'
+        ) {
+            msg("is archived, carry on...\n");
+            continue;
+        }
+
+        # skip marked tasks
+        if (array_key_exists('taskState', $comment)
+            &amp;&amp; ($comment['taskState'] == 'comment'
+                || $comment['taskState'] == 'verified'
+                || $comment['taskState'] == 'open'
+            )
+        ) {
+            msg("reviewer's comment needs attention, carry on...\n");
+            continue;
+        }
+
+        // anything else means that the reviewer's comment needs attention
+        // by the reviewer
+        $flag = true;
+        msg("needs attention!\n");
+        break;
+    }
+
+    // evaluation is complete. Does this review need attention?
+    if ($flag) {
+        $report[] = $review;
+    }
+}
+
+if (count($report)) {
+    echo "User '$reviewer' needs to attend to these reviews:\n";
+    foreach ($report as $review) {
+        $description = trim($review['description']);
+        if (strlen($description) &gt; 60) {
+            $description = substr($description, 0, 60) . ' ...';
+        }
+        echo $review['id'] . ": $description\n";
+    }
+} else {
+    echo "User '$reviewer' has no reviews to attend to.\n";
+}</pre></div>
+               <div class="section" id="api.example.execution">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">Executing the example</h3>
+                        </div>
+                     </div>
+                  </div>
+                  <p>The example is written in PHP. To use it, <a class="link" href="code/reviews.php" target="_top">download the code</a>,
+                     or copy and paste it into a file called <code class="literal">reviews.php</code>. Then, execute it like this:
+                  </p><pre lang="bash" class="programlisting">$ <span class="strong"><strong>php reviews.php -s <span class="emphasis"><em>https://myswarm.host:port/</em></span> -r <span class="emphasis"><em>bob</em></span></strong></span></pre><p>Replace <code class="literal"><span class="emphasis"><em>http://myswarm.host/</em></span></code> with the URL to your Swarm installation.
+                     Replace <code class="literal"><span class="emphasis"><em>bob</em></span></code> with the userid you’d like to report on.
+                  </p>
+                  <p>To authenticate, insert <code class="literal">username:password@</code> before the hostname. If your Helix
+                     Versioning Engine’s security counter is set to <code class="literal">3</code> or higher, you need to
+                     acquire a ticket and use the ticket in place of the password (see
+                     <a class="xref" href="api.html#api.authentication" title="Authentication">Authentication</a> for details). If your Swarm is installed on a
+                     <a class="link" href="setup.post.html#setup.post.port" title="Run Swarm's virtual host on a custom port">custom port</a>, or is installed in a
+                     <a class="link" href="setup.post.html#setup.post.subfolder" title="Run Swarm in a sub-folder of an existing web site">sub-folder</a>, include those elements in the URL as well.
+                     For example:
+                  </p><pre lang="bash" class="programlisting">$ <span class="strong"><strong>php reviews.php -s https://me:F0FC33068BA244B1BBD8196CC9166F34@my.host:8080/swarm/ -r <span class="emphasis"><em>bob</em></span></strong></span></pre><p>If you do not specify the URL correctly, you might see an error like:</p><pre class="screen">Unable to call api: file_get_contents(http://...@my.host:8080/swarm/api/v4/reviews?hasReviewers=1&amp;participants%5B0%5D=bob&amp;max=9&amp;fields%5B0%5D=id&amp;fields%5B1%5D=description&amp;fields%5B2%5D=commits): failed to open stream: HTTP request failed! HTTP/1.1 404 Not Found</pre><p>If there are no errors, and the specified userid does have reviews to attend to,
+                     the output might look like:
+                  </p><pre class="screen">1234: Added grapple-grommit support to woozlewobble class. @bob sh ...</pre><p><code class="literal">1234</code> is the id of a review that <code class="literal">bob</code> should attend to, followed by the first
+                     60 characters of the review’s description.
+                  </p>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div id="nav" class="toc"></div>
+      <div id="search">
+         <div class="input"><input id="search-text" type="search" placeholder="Search this guide" /><button name="clear" type="button" class="clear"><span class="glyphicon glyphicon-remove-sign"></span></button></div>
+         <div class="controls">
+            <div class="substring"><label><input type="checkbox" class="substring" name="substring" value="hide" checked="1" /><span class="description">Hide partial matches</span></label></div>
+            <div class="highlighter"><label><input type="checkbox" class="highlight" name="highlight" value="show" checked="1" /><span class="description">Highlight matches</span></label></div>
+         </div>
+         <div class="count"><span class="number">0</span> matching pages
+                  
+         </div>
+         <ul class="results"></ul>
+      </div>
+      <div id="footer">
+         <div class="container"><a accesskey="p" class="nav-prev" title="Press 'p', or left-arrow, to view the previous page" href="api.endpoints.html"><span class="glyphicon glyphicon-chevron-left"></span><div class="label">Previous</div>
+               <div class="title">API Endpoints</div></a><a accesskey="n" class="nav-next" title="Press 'n', or right-arrow, to view the next page" href="contact.html"><span class="glyphicon glyphicon-chevron-right"></span><div class="label">Next</div>
+               <div class="title">Contact Perforce</div></a></div>
+      </div><script type="text/javascript" src="vendor/jquery/jquery-1.11.3.min.js"></script><script type="text/javascript" src="vendor/bootstrap/js/bootstrap.js"></script><script type="text/javascript" src="vendor/cookie/jquery.cookie.js"></script><script type="text/javascript" src="vendor/highlight/jquery.highlight.js"></script><script type="text/javascript" src="vendor/jsrender/jsrender.js"></script><script type="text/javascript" src="vendor/touchwipe/jquery.touchwipe.min.js"></script><script type="text/javascript" src="vendor/prettify/prettify.js"></script><script defer="1" type="text/javascript" src="js/index.js"></script><script defer="1" type="text/javascript" src="js/toc.js"></script><script defer="1" type="text/javascript" src="js/perforce.js"></script></body>
+</html>

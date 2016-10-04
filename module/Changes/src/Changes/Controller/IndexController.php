@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Changes\Controller;
@@ -17,6 +17,7 @@ use P4\Model\Fielded\Iterator as FieldedIterator;
 use P4\Spec\Change;
 use P4\Spec\Depot;
 use P4\Spec\Exception\NotFoundException;
+use Projects\Model\Project;
 use Reviews\Model\Review;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\JsonModel;
@@ -59,6 +60,10 @@ class IndexController extends AbstractActionController
 
         // get the review(s) associated with the change
         $reviews = Review::fetchAll(array(Review::FETCH_BY_CHANGE => $id), $p4Admin);
+
+        // remember if there are reviews associated and filter out reviews the current user cannot access
+        $hasReviews = $reviews->count() > 0;
+        $reviews    = $services->get('projects_filter')->filter($reviews, 'projects');
 
         // for pending changes, view the associated review if the change is its archive change
         if ($change->isPending()) {
@@ -106,16 +111,23 @@ class IndexController extends AbstractActionController
             $counts['deletes'] += (int) $file['isDelete'];
         }
 
+        // determine whether user can request review (i.e. if not under review already and if review will be accessible)
+        if (!$hasReviews) {
+            $projects         = Project::getAffectedByChange($change, $p4Admin);
+            $canRequestReview = !$projects || $services->get('projects_filter')->filterList($projects);
+        }
+
         return new ViewModel(
             array(
-                'change'        => $change,
-                'isRemoteShelf' => $change->isRemoteEdgeShelf(),
-                'files'         => $files,
-                'counts'        => $counts,
-                'max'           => $max,
-                'cropped'       => isset($cropped) ? true : false,
-                'review'        => $reviews->first(),
-                'jobs'          => $this->getFormattedJobs($change)
+                'change'           => $change,
+                'isRemoteShelf'    => $change->isRemoteEdgeShelf(),
+                'files'            => $files,
+                'counts'           => $counts,
+                'max'              => $max,
+                'cropped'          => isset($cropped) ? true : false,
+                'review'           => !$reviews->count() && $hasReviews ? 'private' : $reviews->first(),
+                'canRequestReview' => isset($canRequestReview) ? $canRequestReview : null,
+                'jobs'             => $this->getFormattedJobs($change)
             )
         );
     }

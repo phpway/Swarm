@@ -1,7 +1,7 @@
                              Release Notes for
                               Perforce Swarm
 
-                       Version 2016.1 Service Pack 1
+                              Version 2016.2
 
 Introduction
 
@@ -10,9 +10,9 @@ Introduction
     quality software faster.
 
     This document lists all user-visible changes to Perforce Swarm for
-    Release 2016.1 SP1.
+    Release 2016.2.
 
-    Perforce numbers releases YYYY.R/CCCCC, e.g. 2016.1/123456. YYYY is the
+    Perforce numbers releases YYYY.R/CCCCC, e.g. 2016.2/123456. YYYY is the
     year; R is the release of that year; CCCCC is the bug fix change level.
     Each bug fix in these release notes is marked by its change number.
     Any release includes (1) all bug fixes of all previous releases and (2)
@@ -28,7 +28,7 @@ Introduction
 
 Documentation
 
-    Swarm Release 2016.1 SP1 documentation is included in the distribution
+    Swarm Release 2016.2 documentation is included in the distribution
     under the "public/docs" folder and can be accessed from within the
     Swarm from the "Help" menu on the toolbar once logged in.
 
@@ -83,6 +83,137 @@ Known Limitations
     Task Stream Reviews
 
         Pre-commit reviews in a task stream are not yet supported.
+
+--------------------------------------------------------------------------
+Major new functionality in 2016.2
+
+    #1438253
+        New features in Swarm API V4:
+
+        - Private Projects support
+        - Support for File-Level and Line-Level Inline Comments
+
+    #1437756, #1438482, #1441898, #1444540, #1444540 (Bugs #87883, #88471,
+    #88548)
+        The Swarm Comments API now supports making file-level and
+        line-level inline comments on changes and reviews.
+
+        By specifying the new parameters "context[rightLine]" and
+        "context[file]", API clients can now add line-level comments in
+        Swarm reviews and changes. Specifying only "context[file]" will
+        add a file-level comment.
+
+        The parameter "context[version]" can also attach the comment to a
+        specific review version (otherwise it defaults to the latest
+        version). To apply the comment to the left side of the diff, use
+        "context[leftLine]" instead of "context[rightLine]".
+
+        Swarm attempts to build the "context[content]" value itself, but
+        you can optionally provide the five lines of diff output for the
+        line-level comment yourself. This is used in the Swarm UI to
+        detect if the code has been modified since the comment was placed,
+        and will render the "old" code as a preview on the comment.
+
+    #1436048, #1437222, #1437569, #1437686, #1437750, #1437752, #1438054,
+    #1438237, #1439324, #1440324, #1440706, #1444542 (Bugs #87098, #87729,
+    #87730, #87930, #87994, #88029, #88132, #88360, #88402, #88418, #88523)
+        Swarm now supports the concept of "Private Projects". These are
+        projects that are only visible to Administrators, Super users,
+        Project Owners, Project Members, and Project Branch Moderators.
+
+        The underlying files are still visible in P4D, unless protections
+        are put in place to hide the files from non-project-members.
+
+        Private projects can be visually distinguished from regular ones
+        by the "Closed Eye" icon that denotes limited visibility.
+
+        Swarm attempts to hide the reviews, changes, activity, and comments
+        attributed to Private Projects in various places, such as the list
+        of changes on jobs, and the comments API.
+
+        If reviews, changes, activity, or comments are related to both a
+        private project and a public project, they are visible to users
+        as though they belonged only to the public project.
+
+        Reviews with no projects attached are assumed to be public.
+
+        Change pages do not show request/view review buttons if the change
+        is associated to a review that is not accessible by the current
+        user, or if the resulting review would not be visible to the user.
+
+        Private Projects cannot have "Followers". Setting a public project
+        to private will conceal the existing unused followers list. Setting
+        it back to public will re-enable the followers.
+
+        Email notifications are modified for private projects. Links to
+        private projects are filtered out of change-commit and review
+        email notifiactions.
+
+        Important: When setting boolean values in the API (such as the new
+        "private" flag for private projects), form-encoded requests require
+        using "0" or "1" instead of "false" or "true". The string "false"
+        is considered non-zero and is implicitly (and confusingly)
+        converted to a "true" value.
+
+Minor new functionality in 2016.2
+
+    #1440162 (Bug #87991)
+        Group name validation now performs more thorough server-side
+        validation.
+
+    #1438479, 1439663, #1439742 (Bugs #88400, #88536)
+        Extended sanity check in index.php to allow validation of Swarm
+        configuration file.
+
+        This should produce nicer errors if values for these options look
+        invalid.
+
+        At the moment, this handles 2 cases:
+        - show error if config.php doesn't return array
+        - show error if short_links are mis-configured
+          (i.e. ensure that [environment][external_url] is set if
+          [short_links][external_url] is set).
+
+    #1438069 (Bug #87622)
+        Added [short_links][external_url] option to allow specifying custom
+        scheme and/or port for generating short links.
+
+        This setting is only honoured if [environment][external_url] is
+        also specified, otherwise Swarm might not be able to resolve the
+        short links to correct URLs.
+
+    #1439046 (Bug #88287)
+        Change the placeholder of 'key=value' to 'property=value' in
+        project edit page.
+
+
+Bugs fixed in 2016.2
+
+    #1446331 (Bug #88629)
+        ThreeJS fixes for Base URL support when rendering 3D models.
+
+    #1438201 (Bug #88438)
+        Minor UI tweak on groups overview page to not show a tooltip with
+        'You are not a member' on users count badge for anonymous users
+        (they are always non-members).
+
+    #1437684 (Bug #87644)
+        Comments API: Fixing an internal server error when listing comments
+        on an invalid topic.
+
+    #1437356 (Bug #87210)
+        Group descriptions are now properly shown in global search.
+
+    #1437317 (Bug #87851)
+        New warning popover on project save shown when we detect that
+        the user might not be able to edit the project after save.
+
+        Additionally, project form buttons are disabled when the popover is
+        shown.
+
+    #1434985 (Bug #88326)
+        Fixed a bug where adding job(s) for changes may not have worked if
+        Swarm is running under a Base URL configuration.
 
 --------------------------------------------------------------------------
 
@@ -167,8 +298,8 @@ Minor new functionality in 2016.1 Service Pack 1 (since 2016.1.1/1400199)
         Show the group id below name on "Groups" listing page if they
         differ.
 
-    #1417297, #1429100, #1427946, #1429616, 1430908 (Bugs #85030, #87887,
-    #88128, #87622)
+    #1417297, #1429100, #1427946, #1429616, #1430908, #1434985 (Bugs #85030,
+    #87887, #88128, #87622, #88326)
         Make Swarm behave more consistently when using a BaseURL
         configuration.
 
@@ -243,7 +374,14 @@ Minor new functionality in 2016.1
 
 Bugs fixed in 2016.1 Service Pack 1 (since 2016.1.1/1400199)
 
-     #1427904 (Bug #87793)
+    #1433837 (Bug #88290)
+        Project Add action now explicitly passes P4Admin to the blank
+        project object.
+
+        This fixes a rare situation where the browser could wait
+        indefinitely when trying to load the Add Project form.
+
+    #1427904 (Bug #87793)
         Search now works for SSL-enabled Perforce servers.
 
         The P4TRUST path in search.php is now set to the trust file

@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Jobs\Controller;
@@ -138,6 +138,14 @@ class IndexController extends AbstractActionController
         $reviews = Review::exists(array_keys($all), $p4Admin);
         $pending = array_diff_key($pending, array_flip($reviews));
         $reviews = array_diff_key($all, $pending);
+
+        // remove reviews not accessible by the current user
+        $filter = $services->get('projects_filter');
+        foreach (Review::fetchAll(array(Review::FETCH_BY_IDS => array_keys($reviews)), $p4Admin) as $model) {
+            if (!$filter->canAccess($model)) {
+                unset($reviews[$model->getId()]);
+            }
+        }
 
         return new ViewModel(
             array(

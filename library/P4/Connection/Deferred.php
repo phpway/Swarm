@@ -4,9 +4,9 @@
  * This is particularly useful if creating the connection will have notable
  * expense you wish to avoid, or if you expect the connection may change.
  *
- * @copyright   2011 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace P4\Connection;

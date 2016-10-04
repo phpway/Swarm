@@ -30,7 +30,13 @@ $basePath = isset($argv[1]) ? $argv[1] : $basePath;
 $path   = $basePath . '/queue';
 $server = isset($_GET['server']) ? $_GET['server'] : null;
 if ($server) {
-    if (preg_match('/[^a-z0-9_-]/i', $server) || !is_dir($basePath . '/servers/' . $server)) {
+    require_once __DIR__ . '/../module/Application/SwarmFunctions.php';
+    $servers = \Application\SwarmFunctions::getMultiServerConfiguration($basePath);
+
+    if (preg_match('/[^a-z0-9_-]/i', $server)
+        || !array_key_exists($server, $servers)
+        || !is_dir($basePath . '/servers/' . $server)
+    ) {
         queueError(
             404,
             'Not Found',

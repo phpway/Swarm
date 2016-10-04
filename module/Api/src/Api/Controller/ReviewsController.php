@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Api\Controller;
@@ -18,8 +18,8 @@ use Zend\View\Model\JsonModel;
  * Swarm Reviews
  *
  * @SWG\Resource(
- *   apiVersion="v3",
- *   basePath="/api/v3/"
+ *   apiVersion="v4",
+ *   basePath="/api/v4/"
  * )
  */
 class ReviewsController extends AbstractApiController
@@ -57,7 +57,7 @@ class ReviewsController extends AbstractApiController
      *   To fetch a review:
      *
      *   ```bash
-     *   curl -u "username:password" "https://my-swarm-host/api/v3/reviews/123"
+     *   curl -u "username:password" "https://my-swarm-host/api/v4/reviews/123"
      *   ```
      *
      *   Swarm responds with a review entity:
@@ -206,7 +206,7 @@ class ReviewsController extends AbstractApiController
      *   To start a review for a committed change or a non-empty shelved changelist:
      *
      *   ```bash
-     *   curl -u "username:password" -d"change=122" "https://my-swarm-host/api/v3/reviews/"
+     *   curl -u "username:password" -d"change=122" "https://my-swarm-host/api/v4/reviews/"
      *   ```
      *
      *   Swarm responds with the new review entity:
@@ -337,7 +337,7 @@ class ReviewsController extends AbstractApiController
      *   To add a change:
      *
      *   ```bash
-     *   curl -u "username:password" -d "change=124" "https://my-swarm-host/api/v3/reviews/123/changes/"
+     *   curl -u "username:password" -d "change=124" "https://my-swarm-host/api/v4/reviews/123/changes/"
      *   ```
      *
      *   Swarm responds with the updated review entity:
@@ -527,7 +527,7 @@ class ReviewsController extends AbstractApiController
      *
      *   ```bash
      *   curl -u "username:password" -X PATCH -d "state=approved" -d "commit=1" \
-     *        "https://my-swarm-host/api/v3/reviews/123/state/"
+     *        "https://my-swarm-host/api/v4/reviews/123/state/"
      *   ```
      *
      *   Swarm responds with the updated review entity, as well as a list of possible transitions for the review:
@@ -816,7 +816,7 @@ class ReviewsController extends AbstractApiController
      *   To list reviews:
      *
      *   ```bash
-     *   curl -u "username:password" "https://my-swarm-host/api/v3/reviews?max=2&fields=id,description,author,state"
+     *   curl -u "username:password" "https://my-swarm-host/api/v4/reviews?max=2&fields=id,description,author,state"
      *   ```
      *
      *   Swarm responds with a list of the latest reviews, a `totalCount` field, and a `lastSeen` value for pagination:
@@ -851,7 +851,7 @@ class ReviewsController extends AbstractApiController
      *   To obtain the next page of a reviews list (based on the previous example):
      *
      *   ```bash
-     *   curl -u "username:password" "https://my-swarm-host/api/v3/reviews\
+     *   curl -u "username:password" "https://my-swarm-host/api/v4/reviews\
      *   ?max=2&fields=id,description,author,state&after=120"
      *   ```
      *
@@ -883,7 +883,7 @@ class ReviewsController extends AbstractApiController
      *   Given a list of change IDs (5, 6, 7), here is how to check if any of them have reviews attached:
      *
      *   ```bash
-     *   curl -u "username:password" "https://my-swarm-host/api/v3/reviews\
+     *   curl -u "username:password" "https://my-swarm-host/api/v4/reviews\
      *   ?max=2&fields=id,changes,description,author,state&change\[\]=5&change\[\]=6&change\[\]=7"
      *   ```
      *

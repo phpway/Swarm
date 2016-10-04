@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Activity\Controller;
@@ -13,6 +13,7 @@ use Activity\Model\Activity;
 use Application\Filter\Preformat;
 use Application\Permissions\Protections;
 use Comments\Model\Comment;
+use Projects\Model\Project;
 use Users\Model\User;
 use Zend\Feed\Writer\Feed;
 use Zend\InputFilter\InputFilter;
@@ -25,19 +26,21 @@ class IndexController extends AbstractActionController
     public function indexAction()
     {
         // collect request parameters:
-        //      stream - only activity for given stream name (path stream takes precedence over query stream)
-        //      change - only activity for given change
-        //         max - limit number of results
-        //       after - only activity below the given id
-        //        type - only activity of given type
-        // disableHtml - return fields in plaintext
-        $request     = $this->getRequest();
-        $stream      = $this->event->getRouteMatch()->getParam('stream', $request->getQuery('stream'));
-        $change      = $request->getQuery('change');
-        $max         = $request->getQuery('max', 25);
-        $after       = $request->getQuery('after');
-        $type        = $request->getQuery('type');
-        $disableHtml = $request->getQuery('disableHtml');
+        //               stream - only activity for given stream name (path stream takes precedence over query stream)
+        //               change - only activity for given change
+        //                  max - limit number of results
+        //                after - only activity below the given id
+        //                 type - only activity of given type
+        //          disableHtml - return fields in plaintext
+        // excludeProjectGroups - exclude swarm project groups from streams
+        $request              = $this->getRequest();
+        $stream               = $this->event->getRouteMatch()->getParam('stream', $request->getQuery('stream'));
+        $change               = $request->getQuery('change');
+        $max                  = $request->getQuery('max', 25);
+        $after                = $request->getQuery('after');
+        $type                 = $request->getQuery('type');
+        $disableHtml          = $request->getQuery('disableHtml');
+        $excludeProjectGroups = $request->getQuery('excludeProjectGroups');
 
         // build fetch query.
         $services = $this->getServiceLocator();
@@ -74,6 +77,17 @@ class IndexController extends AbstractActionController
                 continue;
             }
 
+            // filter out any streams that contain project groups
+            $streams = $event->get('streams');
+            if ($excludeProjectGroups) {
+                $streams = array_filter(
+                    $streams,
+                    function ($stream) {
+                        return strpos($stream, ('group-' . Project::KEY_PREFIX)) !== 0;
+                    }
+                );
+            }
+
             //  - render user avatar
             //  - add formatted date
             //  - compose a url if possible
@@ -92,6 +106,7 @@ class IndexController extends AbstractActionController
                     'userExists'     => User::exists($event->get('user'), $p4Admin),
                     'behalfOfExists' => User::exists($event->get('behalfOf'), $p4Admin),
                     'description'    => $description,
+                    'streams'        => $streams,
                 )
             );
 

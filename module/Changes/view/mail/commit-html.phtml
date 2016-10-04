@@ -10,7 +10,7 @@ $targetLink   = $activity->getUrl($this->plugin('qualifiedUrl'));
 $projects     = $this->projectList(
     $activity->get('projects'),
     null,
-    array('urlHelper' => $this->plugin('qualifiedUrl'), 'style' => 'text-decoration: none;')
+    array('urlHelper' => $this->plugin('qualifiedUrl'), 'style' => 'text-decoration: none;', 'hidePrivate' => true)
 );
 ?>
 <html>

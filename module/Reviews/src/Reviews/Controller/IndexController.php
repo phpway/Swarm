@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2013 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Reviews\Controller;
@@ -2191,8 +2191,7 @@ class IndexController extends AbstractActionController
 
         // user also doesn't have access if the review touches projects that are all private
         // and none of them is accessible to that user
-        $projects = $review->getProjects();
-        if ($projects && !$this->getServiceLocator()->get('projects_filter')->filterList($projects)) {
+        if (!$this->getServiceLocator()->get('projects_filter')->canAccess($review)) {
             throw new ForbiddenException("You don't have permission to access this review.");
         }
     }

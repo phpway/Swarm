@@ -2,14 +2,18 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 return array(
     'short_links' => array(
-        'hostname' => null, // a dedicated host for short links - defaults to standard host
+        'hostname'     => null,     // a dedicated host for short links - defaults to standard host
+                                    // this setting will be ignored if 'external_url' is set
+        'external_url' => null,     // force a custom fully qualified URL (example: "https://example.com:8488")
+                                    // this setting will override 'hostname' if both are specified
+                                    // if set then ['environment']['external_url'] must also be set
     ),
     'router' => array(
         'routes' => array(

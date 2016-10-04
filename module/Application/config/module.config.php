@@ -2,17 +2,19 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 return array(
     'environment' => array(
         'mode'            => getenv('SWARM_MODE') ?: 'production',
-        'hostname'        => getenv('SWARM_HOST') ?: null,
-        'external_url'    => null,                                     // force a custom fully qualified URL
-                                                                       // example: "https://apps.example.com:8443"
+        'hostname'        => getenv('SWARM_HOST') ?: null,             // a dedicated Swarm hostname - this setting will
+                                                                       // be ignored if 'external_url' is set
+        'external_url'    => null,                                     // force a custom fully qualified URL (example:
+                                                                       // "https://example.com:8488") - this setting
+                                                                       // will override 'hostname' if both are specified
         'base_url'        => P4_SERVER_ID ? '/' . P4_SERVER_ID : null, // push routes down in multi-server mode
         'asset_base_path' => P4_SERVER_ID ? '/' : null                 // don't push assets down in multi-server mode
     ),

@@ -2,13 +2,14 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Application;
 
+use Application\Filter\ExternalUrl;
 use Application\Permissions\Csrf\Listener as CsrfListener;
 use Application\Permissions\Exception\ForbiddenException;
 use Application\Permissions\Exception\UnauthorizedException;
@@ -219,21 +220,17 @@ class Module
 
         // normalize and lightly validate the external_url if one is set.
         if (!empty($config['environment']['external_url'])) {
-            $url = parse_url($config['environment']['external_url'])
-                + array('scheme' => '', 'host' => '', 'port' => '');
-
-            if (!in_array(strtolower($url['scheme']), array('http', 'https')) || !$url['host']) {
+            $enforceHttps = isset($config['security']['https_strict']) && $config['security']['https_strict'];
+            $filter       = new ExternalUrl($enforceHttps);
+            $url          = $filter->filter($config['environment']['external_url']);
+            if (!$url) {
                 throw new \RuntimeException(
-                    'Invalid external_url value in config.php'
+                    'Invalid environment external_url value in config.php'
                 );
             }
 
-            $port = $url['port'];
-            $port = $port == 80  && $url['scheme'] == 'http'  ? '' : $port;
-            $port = $port == 443 && $url['scheme'] == 'https' ? '' : $port;
-
-            $config['environment']['external_url'] = $url['scheme'] . '://' . $url['host'] . ($port ? ':' . $port : '');
-            $config['environment']['hostname']     = $url['host'];
+            $config['environment']['external_url'] = $url;
+            $config['environment']['hostname']     = parse_url($url, PHP_URL_HOST);
             $services->setService('config', $config);
         }
 

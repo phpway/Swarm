@@ -2,14 +2,17 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2016 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Api\Controller;
 
 use Api\AbstractApiController;
+use Application\Response\CallbackResponse;
+use P4\Spec\Change;
+use Reviews\Model\Review;
 use Zend\Http\Request;
 use Zend\View\Model\JsonModel;
 
@@ -17,8 +20,8 @@ use Zend\View\Model\JsonModel;
  * Swarm Comments
  *
  * @SWG\Resource(
- *   apiVersion="v3",
- *   basePath="/api/v3/"
+ *   apiVersion="v4",
+ *   basePath="/api/v4/"
  * )
  */
 class CommentsController extends AbstractApiController
@@ -76,7 +79,7 @@ class CommentsController extends AbstractApiController
      *   To list comments:
      *
      *   ```bash
-     *   curl -u "username:password" "https://my-swarm-host/api/v3/comments\
+     *   curl -u "username:password" "https://my-swarm-host/api/v4/comments\
      *   ?topic=reviews/911&max=2&fields=id,body,time,user"
      *   ```
      *
@@ -108,7 +111,7 @@ class CommentsController extends AbstractApiController
      *   To obtain the next page of a comments list (based on the previous example):
      *
      *   ```bash
-     *   curl -u "username:password" "https://my-swarm-host/api/v3/comments\
+     *   curl -u "username:password" "https://my-swarm-host/api/v4/comments\
      *   ?topic=reviews/911&max=2&fields=id,body,time,user&after=39"
      *   ```
      *
@@ -184,7 +187,15 @@ class CommentsController extends AbstractApiController
             'max'   => $request->getQuery('max', 100)
         );
 
-        $result = $this->forward('Comments\Controller\Index', 'index', array('topic' => $topic), $query);
+        try {
+            $result = $this->forward('Comments\Controller\Index', 'index', array('topic' => $topic), $query);
+        } catch (\Exception $e) {
+            $this->getResponse()->setStatusCode(200);
+            $result = array(
+                'comments' => array(),
+                'lastSeen' => null,
+            );
+        }
 
         return $this->getResponse()->isOk()
             ? $this->prepareSuccessModel($result, $fields)
@@ -230,6 +241,50 @@ class CommentsController extends AbstractApiController
      *             type="array",
      *             required=false,
      *             @SWG\Items("string")
+     *         ),
+     *         @SWG\Parameter(
+     *             name="context[file]",
+     *             description="File to comment on. Valid only for `changes` and `reviews` topics.
+     *                          Example: `//depot/main/README.txt`.",
+     *             paramType="form",
+     *             type="string",
+     *             required=false
+     *         ),
+     *         @SWG\Parameter(
+     *             name="context[leftLine]",
+     *             description="Left-side diff line to attach the inline comment to.  Valid only for `changes` and
+     *                          `reviews` topics. If this is specified, `context[file]` must also be specified.",
+     *             paramType="form",
+     *             type="integer",
+     *             required=false
+     *         ),
+     *         @SWG\Parameter(
+     *             name="context[rightLine]",
+     *             description="Right-side diff line to attach the inline comment to.  Valid only for `changes` and
+     *                          `reviews` topics. If this is specified, `context[file]` must also be specified.",
+     *             paramType="form",
+     *             type="integer",
+     *             required=false
+     *         ),
+     *         @SWG\Parameter(
+     *             name="context[content]",
+     *             description="Optionally provide content of the specified line and its four preceding lines. This
+     *                          is used to specify a short excerpt of context in case the lines being commented
+     *                          on change during the review.
+     *
+     *                          When not provided, Swarm makes an effort to build the content on its own - as this
+     *                          involves file operations, it could become slow.",
+     *             paramType="form",
+     *             type="array",
+     *             required=false,
+     *             @SWG\Items("string")
+     *         ),
+     *         @SWG\Parameter(
+     *             name="context[version]",
+     *             description="With a `reviews` topic, this field specifies which version to attach the comment to.",
+     *             paramType="form",
+     *             type="integer",
+     *             required=false
      *         )
      *     )
      * )
@@ -242,7 +297,7 @@ class CommentsController extends AbstractApiController
      *   curl -u "username:password" \
      *        -d "topic=reviews/2" \
      *        -d "body=This is my comment. It is an excellent comment. It contains a beginning, a middle, and an end." \
-     *        "https://my-swarm-host/api/v3/comments"
+     *        "https://my-swarm-host/api/v4/comments"
      *   ```
      *
      *   JSON Response:
@@ -275,7 +330,7 @@ class CommentsController extends AbstractApiController
      *        -d "topic=reviews/2" \
      *        -d "taskState=open" \
      *        -d "body=If you could go ahead and attach a cover page to your TPS report, that would be great." \
-     *        "https://my-swarm-host/api/v3/comments"
+     *        "https://my-swarm-host/api/v4/comments"
      *   ```
      *
      *   JSON Response:
@@ -324,8 +379,20 @@ class CommentsController extends AbstractApiController
      */
     public function create($data)
     {
-        $defaults = array('topic' => '', 'body' => '', 'taskState' => 'comment', 'flags' => array());
-        $data    += $defaults;
+        $defaults = array('topic' => '', 'body' => '', 'context' => '', 'taskState' => 'comment', 'flags' => array());
+
+        try {
+            $data = $this->filterCommentContext($data) + $defaults;
+        } catch (\Exception $e) {
+            $this->getResponse()->setStatusCode(400);
+
+            return new JsonModel(
+                array(
+                    'error'   => 'Provided context could not be filtered.',
+                    'details' => array('context' => $e->getMessage())
+                )
+            );
+        }
 
         // explicitly control the query params we forward to the legacy endpoint
         // if new features get added, we don't want them to suddenly appear
@@ -411,7 +478,7 @@ class CommentsController extends AbstractApiController
      *        -X PATCH \
      *        -d "flags[]=closed" \
      *        -d "body=This comment wasn't as excellent as I may have lead you to believe. A thousand apologies." \
-     *        "https://my-swarm-host/api/v3/comments/42"
+     *        "https://my-swarm-host/api/v4/comments/42"
      *   ```
      *
      *   JSON Response:
@@ -443,7 +510,7 @@ class CommentsController extends AbstractApiController
      *   curl -u "username:password" \
      *        -X PATCH \
      *        -d "taskState=addressed" \
-     *        "https://my-swarm-host/api/v3/comments/43"
+     *        "https://my-swarm-host/api/v4/comments/43"
      *   ```
      *
      *   JSON Response:
@@ -558,5 +625,254 @@ class CommentsController extends AbstractApiController
     protected function normalizeComment($comment, $limitEntityFields = null)
     {
         return $this->limitEntityFields($this->sortEntityFields($comment), $limitEntityFields);
+    }
+
+    /**
+     * Examines provided context to determine if any parts are missing and need to be filled in
+     *
+     * @param   $comment    array                       the full comment structure
+     * @throws  \InvalidArgumentException               if an invalid argument was provided
+     * @throws  \P4\Spec\Exception\NotFoundException    if no such change or review exists.
+     * @return array        the full comment structure, with context filtered for Swarm consumption
+     */
+    protected function filterCommentContext($comment)
+    {
+        // extract context and exit early if there's nothing to do
+        $context = isset($comment['context']) ? $comment['context'] : array();
+        if (!$context || !is_array($comment['context'])) {
+            unset($comment['context']);
+            return $comment;
+        }
+
+        // extract the topic information and limit context normalization to Changes and Reviews
+        if (!preg_match('#(changes|reviews)/([0-9]+)#', isset($comment['topic']) ? $comment['topic'] : '', $matches)) {
+            unset($comment['context']);
+            return $comment;
+        }
+
+        $group = $matches[1];
+        $id    = $matches[2];
+
+        // ensure that a path has been provided
+        if (!isset($context['file'])) {
+            throw new \InvalidArgumentException("File path is required when specifying inline comment context.");
+        }
+
+        $services = $this->getServiceLocator();
+        $p4       = $services->get('p4');
+        $review   = null;
+        $change   = null;
+
+        // if commenting on a review, fetch the review and inject its ID into the context
+        if ($group === 'reviews') {
+            $review            = Review::fetch($id, $p4);
+            $context['review'] = $review->getId();
+            unset($context['change']);
+        }
+
+        // if commenting on a change, fetch the change and inject its ID into the context
+        if ($group === 'changes') {
+            $change            = Change::fetch($id, $p4);
+            $context['change'] = $change->getId();
+            unset($context['review']);
+        }
+
+        // fetch valid review versions and determine which version is being commented on (default to latest)
+        $validVersions = $review ? $review->get('versions') : array();
+        $version       = isset($context['version']) ? $context['version'] : null;
+        $version       = $version ? (int)$version : count($validVersions);
+        if ($review && !$review->hasVersion($version)) {
+            throw new \InvalidArgumentException("Specified version was not found in this review.");
+        }
+
+        // if content has already been provided, check that it is a valid array of strings,
+        // then set the leftLine/rightLine/version and exit with sorted context fields
+        if (isset($context['content']) && is_array($context['content']) && count($context['content']) > 0) {
+            foreach ($context['content'] as $value) {
+                if (!is_string($value)) {
+                    throw new \InvalidArgumentException('Context content must be an array of strings.');
+                }
+            }
+
+            if ($review && $version) {
+                $context['version'] = $version;
+            }
+
+            $context['leftLine']  = isset($context['leftLine'])  ? $context['leftLine']  : null;
+            $context['rightLine'] = isset($context['rightLine']) ? $context['rightLine'] : null;
+            $comment['context']   = $this->sortContextFields($context);
+            return $comment;
+        }
+
+        if ($review && $version) {
+            $change             = Change::fetch($review->getChangeOfVersion($version), $p4);
+            $context['version'] = $version;
+        }
+
+        // find the data for the specified file in the change
+        $fileData = current(
+            array_filter(
+                $change->getFileData(true),
+                function ($item) use ($context) {
+                    return $item['depotFile'] === $context['file'];
+                }
+            )
+        );
+
+        if (!$fileData) {
+            throw new \InvalidArgumentException('File path not found in specified review/change.');
+        }
+
+        $action    = isset($fileData['action'])   ? $fileData['action']         : 'edit';
+        $leftLine  = isset($context['leftLine'])  ? (int) $context['leftLine']  : null;
+        $rightLine = isset($context['rightLine']) ? (int) $context['rightLine'] : null;
+        $rightPath = $fileData['depotFile'];
+        $pending   = $change->isPending();
+        $rev       = $pending ? $change->getId() : $fileData['rev'];
+        $maxLines  = 5;
+        $lines     = $this->fetchDiffSnippet($action, $leftLine, $rightLine, $rightPath, $pending, $rev, $maxLines);
+
+        // if the line is not found in the diff and we have a line number,
+        // we check for context using fileAction() in the Files module
+        $lineNumber = isset($context['rightLine']) ? $context['rightLine'] : null;
+        $lineNumber = !$lineNumber && isset($context['leftLine']) ? $context['leftLine'] : $lineNumber;
+        if (!$lines && $lineNumber) {
+            $lines = $this->fetchFullFileSnippet($rightPath, $lineNumber, $maxLines);
+        }
+
+        // ensure that, at most, only $maxLines of content are attached to the context
+        // if no lines are matched, convert the context to a file-level comment
+        if (count($lines) > 0) {
+            $context['leftLine']  = $leftLine  ?: null;
+            $context['rightLine'] = $rightLine ?: null;
+            $context['content']   = array_map(
+                function ($value) {
+                    return substr($value, 0, 256);
+                },
+                array_slice($lines, 0, $maxLines)
+            );
+        } else {
+            unset($context['leftLine']);
+            unset($context['rightLine']);
+            unset($context['content']);
+        }
+
+        $comment['context'] = $this->sortContextFields($context);
+
+        return $comment;
+    }
+
+    protected function fetchDiffSnippet($action, $leftLine, $rightLine, $rightPath, $pending, $rev, $maxLines)
+    {
+        $leftRev    = $pending ? '' : '#' . ($rev - 1);
+        $diffParams = array(
+            'right'  => $rightPath . ($pending ? '@=' . $rev : '#' . $rev),
+            'left'   => $rightPath . $leftRev,
+            'action' => $action,
+        );
+
+        if ($leftRev === '#0' || $action == 'add') {
+            unset($diffParams['left']);
+        }
+
+        $diffResult = $this->forward(
+            'Files\Controller\Index',
+            'diff',
+            null,
+            $diffParams
+        );
+
+        $diff      = $diffResult->getVariable('diff', array());
+        $lines     = array();
+        $foundLine = false;
+
+        // scan through the diff to find if any of the chunks match the provided line
+        // number, maintaining a buffer of the most recent $maxLines lines examined,
+        // using array_shift to discard older lines.
+        // when moving to the next diff chunk, if we haven't found a matching line,
+        // reset the $lines buffer.
+        foreach ($diff['lines'] as $currentLine) {
+            if ($currentLine['type'] === 'meta') {
+                $lines = $foundLine ? $lines : array();
+                continue;
+            }
+
+            if ($foundLine) {
+                continue;
+            }
+
+            // add the current line to the buffer
+            array_push($lines, $currentLine['value']);
+
+            if ($leftLine && $currentLine['leftLine'] === $leftLine) {
+                $foundLine = true;
+            }
+
+            if ($rightLine && $currentLine['rightLine'] === $rightLine) {
+                $foundLine = true;
+            }
+
+            // remove a line from the back of the buffer, if it contains more than $maxLines
+            if (count($lines) > $maxLines) {
+                array_shift($lines);
+            }
+        }
+
+        return $foundLine ? $lines : array();
+    }
+
+    protected function fetchFullFileSnippet($rightPath, $lineNumber, $maxLines)
+    {
+        $lines      = array();
+        $fileResult = $this->forward(
+            'Files\Controller\Index',
+            'file',
+            array(
+                'path' => $rightPath,
+            ),
+            array(
+                'lines'  => array(
+                    'start' => $lineNumber - ($maxLines - 1) > 0 ? $lineNumber - ($maxLines - 1) : 1,
+                    'end'   => $lineNumber
+                ),
+                'view'   => true,
+                'format' => 'json',
+            )
+        );
+
+        if ($fileResult instanceof CallbackResponse) {
+            $lines = array_values(json_decode($fileResult->getContent(), true));
+        }
+
+        // reformat the lines
+        // - include a leading space that indicates the lines are not an add or an edit
+        // - remove newline characters
+        foreach ($lines as $key => $line) {
+            $lines[$key] = ' ' . preg_replace('/(\r\n|\n)$/', '', $line);
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Helper to order context fields according to expectations
+     *
+     * @param   array   $context    the context keys/values to sort (shallow)
+     * @return  array   the sorted keys/values
+     */
+    protected function sortContextFields(array $context)
+    {
+        $sortedContext = array();
+        $contextOrder  = array('file', 'leftLine', 'rightLine', 'content', 'change', 'review', 'version');
+
+        foreach ($contextOrder as $key) {
+            if (array_key_exists($key, $context)) {
+                $sortedContext[$key] = $context[$key];
+                unset($context[$key]);
+            }
+        }
+
+        // return with any leftover keys at the end
+        return $sortedContext + $context;
     }
 }

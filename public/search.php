@@ -31,7 +31,8 @@ namespace {
 
     // detect a multi-p4-server setup and define
     // associated constants (MULTI_P4_SERVER, P4_SERVER_ID, DATA_PATH)
-    detectP4Server($config);
+    require_once __DIR__ . '/../module/Application/SwarmFunctions.php';
+    \Application\SwarmFunctions::configureEnvironment(BASE_DATA_PATH, isset($_GET['server']) ? $_GET['server'] : null);
 
     // all of our responses should be interpreted as json
     header('Content-type: application/json; charset=utf-8');
@@ -65,29 +66,37 @@ namespace {
         $cache = getLatestCache('projects', $config);
         if ($cache) {
             $projects = unserialize(file_get_contents($cache));
+
+            // prepare list with project ids the current user can access; we will use it
+            // to determine access to private projects
+            // for anonymous users, no private projects are accessible
+            // for authenticated users, only grant access to private projects that are
+            // among the accessible projects for the current user
+            $accessibleProjects = getIdentity($config) ? getProjectIds() : array();
+
             foreach ($projects as $id => $project) {
                 $project = get_object_vars($project) + array('values' => array());
 
-                // handle private projects - hide them to all users as we can't easily determine whether
-                // they are accessible by the current user or not
-                // @todo - implement better approach to show private projects to users who have access
-                if (isset($project['values']['private']) && $project['values']['private']) {
+                // exclude deleted projects from the result
+                if (isset($project['values']['deleted']) && $project['values']['deleted']) {
                     continue;
                 }
 
-                // skip if project is deleted
-                if (isset($project['values']['deleted']) && $project['values']['deleted']) {
+                // skip if project is private and not accessible by the current user
+                $isPrivate = isset($project['values']['private']) && $project['values']['private'];
+                if ($isPrivate && !in_array($id, $accessibleProjects)) {
                     continue;
                 }
 
                 $score = getMatchScore($project['values'], 'name', $keywords);
                 if ($score !== false) {
                     $results[] = array(
-                        'type'   => 'project',
-                        'id'     => $id,
-                        'label'  => $project['values']['name'],
-                        'detail' => substr($project['values']['description'], 0, 250),
-                        'score'  => $score + 5
+                        'type'    => 'project',
+                        'id'      => $id,
+                        'label'   => $project['values']['name'],
+                        'detail'  => substr($project['values']['description'], 0, 250),
+                        'score'   => $score + 5,
+                        'private' => $isPrivate
                     );
                 }
             }
@@ -151,10 +160,11 @@ namespace {
                 $score = getMatchScore($values, array('id', 'label', 'description'), $keywords);
                 if ($score !== false) {
                     $results[] = array(
-                        'type'  => 'group',
-                        'id'    => $values['id'],
-                        'label' => $values['label'],
-                        'score' => $score
+                        'type'   => 'group',
+                        'id'     => $values['id'],
+                        'label'  => $values['label'],
+                        'detail' => $values['description'],
+                        'score'  => $score
                     );
                 }
             }
@@ -338,6 +348,33 @@ namespace {
         return $score;
     }
 
+    function getProjectIds()
+    {
+        // determine base path for the url:
+        // - if in multi-p4d mode, its simply the server id
+        // - otherwise check the request uri, if Swarm is running under a sub-folder,
+        //   the base path should be before /search?<query_params>
+        $basePath = P4_SERVER_ID
+            ? '/' . P4_SERVER_ID
+            : preg_replace('#/search$#', '', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+
+        // return ids of all projects that are accessible for the current user
+        $server  = $_SERVER + array('HTTP_HOST' => '', 'HTTPS' => null, 'HTTP_COOKIE' => '');
+        $url     = 'http' . ($server['HTTPS'] ? 's' : '') . '://' . rtrim($server['HTTP_HOST'], '/') . $basePath;
+        $context = stream_context_create(
+            array(
+                'http' => array(
+                    'header' => 'Cookie: ' . $server['HTTP_COOKIE'] . "\r\n",
+                )
+            )
+        );
+
+        return json_decode(
+            file_get_contents($url . '/projects?idsOnly=true', false, $context),
+            true
+        );
+    }
+
     function getP4($config)
     {
         // to facilitate SSL connections, specify the path to the trust file which
@@ -374,35 +411,5 @@ namespace {
             $p4->charset = 'utf8unchecked';
             return call_user_func_array(array($p4, 'run'), $arguments);
         }
-    }
-
-    function detectP4Server($config)
-    {
-        // any sub-array under 'p4' with a port element enables multi-p4-server mode
-        $servers = array_filter(
-            isset($config['p4']) ? (array) $config['p4'] : array(),
-            function ($item) {
-                return is_array($item) && isset($item['port']);
-            }
-        );
-
-        // early exit if we do not have multiple p4 servers
-        define('MULTI_P4_SERVER', (bool) $servers);
-        if (!MULTI_P4_SERVER) {
-            define('P4_SERVER_ID', null);
-            define('DATA_PATH', rtrim(BASE_DATA_PATH, '/\\'));
-            return;
-        }
-
-        // we have multiple servers, so we need to define P4_SERVER_ID
-        $serverId = isset($_GET['server']) ? $_GET['server'] : null;
-        define('P4_SERVER_ID', array_key_exists($serverId, $servers) ? $serverId : null);
-
-        // in a multi-p4-server setup the DATA_PATH is BASE_DATA_PATH/servers/P4_SERVER_ID
-        // this isolates each server's data so that files do not collide and conflict
-        define(
-            'DATA_PATH',
-            rtrim(BASE_DATA_PATH . '/' . (P4_SERVER_ID ? 'servers/' . P4_SERVER_ID : ''), '/\\')
-        );
     }
 }

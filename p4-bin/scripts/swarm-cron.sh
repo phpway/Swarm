@@ -2,8 +2,8 @@
 #
 # Perforce Swarm Cron Script
 #
-# @copyright   2014 Perforce Software. All rights reserved.
-# @version     <release>/<patch>
+# @copyright   2013-2016 Perforce Software. All rights reserved.
+# @version     2016.2/1446446
 #
 # This script is meant to be called from cron every minute.
 

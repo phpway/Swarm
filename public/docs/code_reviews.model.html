@@ -1,0 +1,602 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <title>Models // Swarm 2016.2 Guide</title>
+      <meta name="generator" content="DocBook XSL Stylesheets V1.78.1 with Perforce customizations" />
+      <link rel="home" href="copyright.html" title="Swarm 2016.2 Guide" />
+      <link rel="up" href="chapter.code_reviews.html" title="Code reviews" />
+      <link rel="prev" href="chapter.code_reviews.html" title="Code reviews" />
+      <link rel="next" href="code_reviews.queues.html" title="Review queues" />
+      <meta name="Section-title" content="Models" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.css" />
+      <link rel="stylesheet" href="vendor/prettify/prettify.css" />
+      <link rel="stylesheet" href="css/perforce.css" />
+      <link rel="stylesheet" href="css/print.css" media="print" />
+      <link rel="shortcut icon" href="images/favicon.ico" />
+      <!--[if lt IE 9]>
+  <script type="text/javascript" src="vendor/respond/respond.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/ie.css"/>
+<![endif]-->
+      <link rel="stylesheet" type="text/css" href="css/swarm.css" />
+   </head>
+   <body><a id="page-top"></a><div id="header">
+         <div class="container"><button name="toc" type="button" class="toc"><span class="glyphicon glyphicon-list"></span></button><span class="logo"><a href="http://www.perforce.com/documentation"></a></span><h1><a href="index.html" class="title"><span class="brand"></span><span class="guide-title">Swarm 2016.2 Guide</span><span class="guide-subtitle">
+                                   (September 2016)
+                                 </span></a></h1><button name="search" type="button" class="search" title="Search this guide"><span class="glyphicon glyphicon-search"></span></button></div>
+         <div id="progress"></div>
+      </div>
+      <div id="content" class="content" tabindex="-1">
+         <div class="container">
+            <!---->
+            <div class="section" id="code_reviews.model">
+               <div class="titlepage">
+                  <div>
+                     <div>
+                        <h2 class="title" style="clear: both">Models</h2>
+                     </div>
+                  </div>
+               </div>
+               <p>
+                  There are three code review models: pre-commit, post-commit, and the Git
+                      Fusion model. Which model you use for code reviews with Swarm is up to you.
+                    
+               </p>
+               <div class="section" id="code_reviews.model.precommit">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">Pre-commit model</h3>
+                        </div>
+                     </div>
+                  </div>
+                  <p>
+                           The pre-commit model is possible due to the Helix Versioning Engine's
+                           <span class="emphasis"><em>shelving</em></span> feature. Shelving enables you to temporarily
+                           make copies of your files available to other users without committing the
+                           changes into the depot. Shelving can be a very handy way for developers to
+                           create a backup, or to handle local workspace changes that might otherwise
+                           lose work in progress, without having to commit code that might
+                           destabilize a codebase.
+                         
+                  </p>
+                  <p>
+                           Swarm uses the shelving feature in the Helix Versioning Engine to manage
+                           code reviews. Shelving allows reviewers to easily acquire a copy of the
+                           code to be reviewed, and allows updates to the reviewed code prior to
+                           submission.
+                         
+                  </p>
+                  <div class="tip admonition">
+                     <h3 class="title">Tip</h3>
+                     <p>
+                                For more information on shelving, see:
+                                <a class="link" href="https://www.perforce.com/perforce/doc.current/manuals/p4guide/04_files.html#1072439" target="_top">P4
+                                   User's Guide: Shelving work in progress</a>.
+                              
+                     </p>
+                  </div>
+               </div>
+               <div class="section" id="code_reviews.model.postcommit">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">Post-commit model</h3>
+                        </div>
+                     </div>
+                  </div>
+                  <p>
+                           The post-commit model can be used if your team's development processes
+                           preclude the use of shelving. Code must be committed to the Helix
+                           Versioning Engine before code review can begin, which reduces the
+                           opportunity to fix problems before, for example, a continuous integration
+                           system notices problems. However, code reviews can be started for any
+                           existing code regardless of how long it has been committed.
+                         
+                  </p>
+               </div>
+               <div class="section" id="code_reviews.model.git_fusion">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">Git Fusion model</h3>
+                        </div>
+                     </div>
+                  </div>
+                  <p>
+                           Perforce Git Fusion provides repo management for Git repositories, and
+                           provides workflows that enable Git and Perforce users to collaborate on
+                           the same projects using their preferred tools.
+                         
+                  </p>
+                  <p>
+                           The Git Fusion model is similar to the pre-commit model; changes in your
+                           local repo can be pushed for review to a named Perforce branch in the
+                           Git fusion repo configuration, making your proposed changes available so
+                           that others can review and comment on them prior to committing them to
+                           the target branch. Git Fusion and Swarm work together to create a review
+                           branch and container for the pre-commit collaboration. 
+                         
+                  </p>
+                  <p>
+                           The Git Fusion model has several limitations that you should be aware of:
+                         
+                  </p>
+                  <div class="itemizedlist">
+                     <ul class="itemizedlist" style="list-style-type: disc; ">
+                        <li class="listitem">
+                           <p>
+                                        The target branch for Git Fusion-created reviews must be a fully
+                                        populated branch, and must be listed in the repo-specific Git Fusion
+                                        configuration.
+                                      
+                           </p>
+                           <p>
+                                        See
+                                        <a class="link" href="https://www.perforce.com/perforce/doc.current/manuals/git-fusion/chapter_dyn_ngj_3l.html" target="_top">"Setting
+                                           up Repos"</a> in the
+                                        <a class="link" href="https://www.perforce.com/perforce/doc.current/manuals/git-fusion/" target="_top">Git
+                                           Fusion Guide</a> for details on
+                                        <a class="link" href="https://www.perforce.com/perforce/doc.current/manuals/git-fusion/chapter_dyn_ngj_3l.html#section_kkz_gqv_rl" target="_top">converting
+                                           a lightweight branch into a fully populated Perforce branch</a>.
+                                      
+                           </p>
+                        </li>
+                        <li class="listitem">
+                           <p>
+                                        Reviews created with Git Fusion can only be updated from Git Fusion.
+                                      
+                           </p>
+                        </li>
+                        <li class="listitem">
+                           <p>
+                                        You cannot clean up history and then push your changes to the same
+                                        review. If you perform a Git rebase, you should push your changes as a
+                                        new review.
+                                      
+                           </p>
+                        </li>
+                        <li class="listitem">
+                           <p>
+                                        A Git Fusion review does not currently display the individual task
+                                        branch commits that make up the review. Only the merged commit diffs
+                                        are shown.
+                                      
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="tip admonition">
+                     <h3 class="title">Tip</h3>
+                     <p>
+                                For more information on Git Fusion, see the
+                                <a class="link" href="https://www.perforce.com/perforce/doc.current/manuals/git-fusion/" target="_top">Git Fusion Guide</a>
+                              
+                     </p>
+                  </div>
+               </div>
+               <div class="section" id="code_reviews.model.internal">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">Internal representation</h3>
+                        </div>
+                     </div>
+                  </div>
+                  <div class="section" id="code_reviews.model.internal.changelists">
+                     <div class="titlepage">
+                        <div>
+                           <div>
+                              <h4 class="title">Swarm-managed changelists</h4>
+                           </div>
+                        </div>
+                     </div>
+                     <p>
+                                A code review consists of one or more shelved changelists that Swarm
+                                manages. A shelved changelist is a pending changelist that has a
+                                snapshot of its files on a <span class="emphasis"><em>shelf</em></span> associated with
+                                the changelist.
+                              
+                     </p>
+                     <p>
+                                When a review is started, Swarm creates a new changelist that becomes
+                                the review changelist. What happens afterwards varies:
+                              
+                     </p>
+                     <div class="itemizedlist">
+                        <ul class="itemizedlist" style="list-style-type: disc; ">
+                           <li class="listitem">
+                              <p>
+                                             If the review contains uncommitted work (the pre-commit model),
+                                             Swarm copies the shelved files from the user's changelist that
+                                             initiated the review into the review's changelist.
+                                           
+                              </p>
+                           </li>
+                           <li class="listitem">
+                              <p>
+                                             Any time that a user's changelist associated with the review has its
+                                             shelved files updated, Swarm copies the shelved files into its
+                                             review changelist and creates an <span class="emphasis"><em>archive</em></span>
+                                             changelist. An archive changelist is no different from any other
+                                             pending changelist with shelved files, but it allows Swarm to
+                                             provide versioning and diffs within a review.
+                                           
+                              </p>
+                           </li>
+                           <li class="listitem">
+                              <p>
+                                             If the head version of a review is committed (the post-commit
+                                             model), the review's changelist is emptied of files.
+                                           
+                              </p>
+                           </li>
+                        </ul>
+                     </div>
+                     <p>
+                                The review's changelist is never actually committed; this allows the
+                                review to be <span class="emphasis"><em>opened</em></span> later with additional shelved
+                                changes.
+                              
+                     </p>
+                     <div class="important admonition">
+                        <h3 class="title">Important</h3>
+                        <p>
+                                     <span class="bold"><strong>Swarm's managed review changelists should only
+                                           be deleted if you are uninstalling Swarm.</strong></span>
+                                   
+                        </p>
+                        <p>
+                                     Swarm's review changelists maintain the history of a review and all of
+                                     its feedback. The deletion of a Swarm shelved changelist causes
+                                     instability and potentially data loss, and represents a scenario that
+                                     can be very challenging to recover from, even with the engagement of
+                                     Perforce consultants.
+                                   
+                        </p>
+                        <p>
+                                     You can display a list of all of the Swarm-managed changelists using
+                                     the <span class="command"><strong>p4 changelists</strong></span> command:
+                                   
+                        </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>p4 changelists -u <em class="replaceable"><code>swarm</code></em></strong></span>
+Change 1212285 on 2015/07/31 by swarm@swarm-96017af4-5615-9819-7af1-6fc1fa537214 *pending* 'Add requirements and instructions'
+Change 1212284 on 2015/07/31 by swarm@swarm-96017af4-5615-9819-7af1-6fc1fa537214 *pending* 'Add requirements and instructions'
+...
+</pre><p>
+                                     <em class="replaceable"><code>swarm</code></em> is the userid with
+                                     <span class="emphasis"><em>admin</em></span>-level privileges within the Helix Versioning
+                                     Engine that Swarm is <a class="link" href="setup.swarm.html" title="Swarm configuration">configured to
+                                        use</a>. Use the appropriate userid when you run the <span class="command"><strong>p4
+                                           changelists</strong></span> command.
+                                   
+                        </p>
+                     </div>
+                  </div>
+                  <div class="section" id="code_reviews.model.internal.workspaces">
+                     <div class="titlepage">
+                        <div>
+                           <div>
+                              <h4 class="title">Swarm-managed workspaces</h4>
+                           </div>
+                        </div>
+                     </div>
+                     <p>
+                                Whenever Swarm creates a changelist for a review, it uses a client
+                                workspace (or just workspace) associated with the configured Helix userid
+                                that has <span class="emphasis"><em>admin</em></span> privileges. Whenever a user commits a
+                                change via Swarm's user interface, Swarm uses a workspace associated with
+                                that user.
+                              
+                     </p>
+                     <div class="tip admonition">
+                        <h3 class="title">Tip</h3>
+                        <p>
+                                     To learn more about workspaces, see the section
+                                     <a class="link" href="https://www.perforce.com/perforce/doc.current/manuals/intro/index.html#basic_concepts.helix" target="_top">Helix
+                                        as a version control implementation</a> in the
+                                     <a class="link" href="https://www.perforce.com/perforce/doc.current/manuals/intro/index.html" target="_top"><em class="citetitle">Introducing
+                                           Helix</em></a> guide.
+                                   
+                        </p>
+                     </div>
+                     <p>
+                                The workspaces that Swarm creates and uses live in the
+                                <code class="filename"><a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/data/clients</code> folder.
+                              
+                     </p>
+                     <p>
+                                Inside the clients folder, Swarm maintains a user-specific folder that
+                                contains any workspace folders that may be required. Each user-specific
+                                folder is named by converting their Helix userid into hexadecimal to avoid
+                                any characters that would be problematic in the filesystem, such as
+                                slashes, accents, UTF-8 characters, etc. For example, the folder for the
+                                user <code class="literal">eedwards</code> would be named
+                                <code class="literal">6565647761726473</code>.
+                              
+                     </p>
+                     <p>
+                                Within the user-specific folder are the folders that become the
+                                <span class="emphasis"><em>root</em></span> of each workspace. Each of these folders is
+                                named with a globally-unique identifier (GUID) prefixed with
+                                <code class="filename">swarm-</code>, for example
+                                <code class="filename">swarm-438d482b-f107-9a35-c06c-86ac68136b00</code>.
+                                Accompanying each folder is a lock file with the same name plus the
+                                <code class="filename">.lock</code> extension. Finally, the user-specific clients
+                                folder contains a management lock file called
+                                <code class="filename">manage.lock</code>.
+                              
+                     </p>
+                     <p>
+                                Here is an example of the folder structure:
+                              
+                     </p><pre class="programlisting">
+<a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/
+  data/
+    clients/
+      6565647761726473/
+        manage.lock
+        swarm-438d482b-f107-9a35-c06c-86ac68136b00/
+        swarm-438d482b-f107-9a35-c06c-86ac68136b00.lock
+        swarm-8388362a-233d-0cb9-3e90-895eaaa99f6c/
+        swarm-8388362a-233d-0cb9-3e90-895eaaa99f6c.lock
+      736c6f7264/
+        manage.lock
+        swarm-da7de4b4-0ecb-12c8-1b35-f3e32bb18033/
+        swarm-da7de4b4-0ecb-12c8-1b35-f3e32bb18033.lock
+</pre><p>
+                                Here are the steps Swarm takes when it needs to use a client:
+                              
+                     </p>
+                     <div class="orderedlist">
+                        <ol class="orderedlist" type="1">
+                           <li class="listitem">
+                              <p>
+                                             Convert the current connection's userid to hexadecimal.
+                                           
+                              </p>
+                           </li>
+                           <li class="listitem">
+                              <p>
+                                             Check to see whether a user-specific folder exists within
+                                             <code class="filename"><a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/data/clients</code>; if not, create the
+                                             folder.
+                                           
+                              </p>
+                           </li>
+                           <li class="listitem" id="cwmir-step3">
+                              <p>
+                                             Within the user-specific folder, loop over any existing workspace
+                                             folders and attempt to lock each in turn:
+                                           
+                              </p>
+                              <div class="itemizedlist">
+                                 <ul class="itemizedlist" style="list-style-type: disc; ">
+                                    <li class="listitem">
+                                       <p>
+                                                          If a lock is acquired skip to the next step.
+                                                        
+                                       </p>
+                                    </li>
+                                    <li class="listitem">
+                                       <p>
+                                                          Otherwise, perform the
+                                                          <a class="link" href="code_reviews.model.html#code_reviews.model.internal.workspaces.create" title="Create workspace procedure">create
+                                                             workspace</a> procedure.
+                                                        
+                                       </p>
+                                    </li>
+                                 </ul>
+                              </div>
+                              <h5 id="code_reviews.model.internal.workspaces.create">
+                                             Create workspace procedure
+                                           
+                              </h5>
+                              <div class="orderedlist">
+                                 <ol class="orderedlist" type="a">
+                                    <li class="listitem">
+                                       <p>
+                                                          Check if the max number of clients for the current user has
+                                                          been reached:
+                                                        
+                                       </p>
+                                       <div class="itemizedlist">
+                                          <ul class="itemizedlist" style="list-style-type: disc; ">
+                                             <li class="listitem">
+                                                <p>
+                                                                       If so, wait a short amount of time (50 milliseconds),
+                                                                       and start <a class="link" href="code_reviews.model.html#cwmir-step3">step 3</a>
+                                                                       again. 
+                                                                     
+                                                </p>
+                                             </li>
+                                             <li class="listitem">
+                                                <p>
+                                                                       If not, proceed to the next step.
+                                                                     
+                                                </p>
+                                             </li>
+                                          </ul>
+                                       </div>
+                                    </li>
+                                    <li class="listitem">
+                                       <p>
+                                                          Take a lock on <code class="filename">manage.lock</code>.
+                                                        
+                                       </p>
+                                    </li>
+                                    <li class="listitem">
+                                       <p>
+                                                          Check if the max number of clients for the current user has
+                                                          been reached:
+                                                        
+                                       </p>
+                                       <div class="itemizedlist">
+                                          <ul class="itemizedlist" style="list-style-type: disc; ">
+                                             <li class="listitem">
+                                                <p>
+                                                                       If so, release the <code class="filename">manage.lock</code>,
+                                                                       wait a short amount of time (50 milliseconds), and start
+                                                                       <a class="link" href="code_reviews.model.html#cwmir-step3">step 3</a> again.
+                                                                     
+                                                </p>
+                                             </li>
+                                             <li class="listitem">
+                                                <p>
+                                                                       If not, proceed to the next step.
+                                                                     
+                                                </p>
+                                             </li>
+                                          </ul>
+                                       </div>
+                                    </li>
+                                    <li class="listitem">
+                                       <p>
+                                                          Create a new workspace folder using a GUID-based filename,
+                                                          and take a lock on the folder.
+                                                        
+                                       </p>
+                                    </li>
+                                    <li class="listitem">
+                                       <p>
+                                                          Release the <code class="filename">manage.lock</code> lock.
+                                                        
+                                       </p>
+                                    </li>
+                                 </ol>
+                              </div>
+                           </li>
+                           <li class="listitem">
+                              <p>
+                                             Perform the necessary file operations using the locked workspace
+                                             folder.
+                                           
+                              </p>
+                           </li>
+                           <li class="listitem">
+                              <p>
+                                             Revert the file content within the workspace folder to avoid having
+                                             constantly growing disk space use. 
+                                           
+                              </p>
+                              <div class="note admonition">
+                                 <h3 class="title">Note</h3>
+                                 <p>
+                                                  There may occasionally be stray files left; Swarm is not aggressive
+                                                  about cleaning up.
+                                                
+                                 </p>
+                              </div>
+                           </li>
+                           <li class="listitem">
+                              <p>
+                                             Swarm releases the lock on the workspace folder.
+                                           
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                     <p>
+                                Most users should only require 1-2 workspaces, and those are only
+                                required if they commit from Swarm. The <span class="emphasis"><em>admin</em></span> user
+                                that Swarm is configured to use should only use one workspace per
+                                configured worker.
+                              
+                     </p>
+                     <p>
+                                By default, the number of workspaces that could be active at any given
+                                instant is two times the number of configured workers. Since the default
+                                worker count is three, Swarm would use at most six workspaces
+                                simultaneously.
+                              
+                     </p>
+                     <p>
+                                If the workspace limit is reached, further file processing is blocked
+                                until a workspace becomes available. Potentially, this means that users
+                                could encounter timeouts. Configuring Swarm to use more workers could
+                                solve that issue.
+                              
+                     </p>
+                     <div class="section" id="code_reviews.model.internal.workspaces.removal">
+                        <div class="titlepage">
+                           <div>
+                              <div>
+                                 <h5 xmlns="http://www.w3.org/1999/xhtml" class="title">Removal considerations</h5>
+                              </div>
+                           </div>
+                        </div>
+                        <p>
+                                     Administrators might wish to remove Swarm-managed workspaces. There
+                                     are a few considerations that should be assessed prior to removal:
+                                   
+                        </p>
+                        <div class="itemizedlist">
+                           <ul class="itemizedlist" style="list-style-type: disc; ">
+                              <li class="listitem">
+                                 <p>
+                                                  Ideally, you should stop the web server (taking Swarm out of
+                                                  service) before removing a Swarm-managed workspace from the Swarm
+                                                  server; this eliminates the risk of removing a workspace that is
+                                                  in use.
+                                                
+                                 </p>
+                                 <p>
+                                                  If you do not stop the web server first, Swarm may encounter an
+                                                  error during a submit.
+                                                
+                                 </p>
+                              </li>
+                              <li class="listitem">
+                                 <p>
+                                                  Removal of a Swarm-managed workspace folder does not remove the
+                                                  client spec from the Helix Versioning Engine. Unless the client
+                                                  spec is removed, that workspace effectively becomes orphaned.
+                                                  Orphaned clients are, of themselves, not a big concern as the
+                                                  storage and performance impact is negligible.
+                                                
+                                 </p>
+                              </li>
+                              <li class="listitem">
+                                 <p>
+                                                  Removal of a Swarm-managed workspace's corresponding client spec
+                                                  in the Helix Versioning Engine can be done. However,
+                                                  <span class="bold"><strong>you should never remove a client spec that
+                                                        has associated shelved files</strong></span>.
+                                                
+                                 </p>
+                                 <p>
+                                                  Usually, the only client specs that should have associated shelved
+                                                  files belong to the <span class="emphasis"><em>admin</em></span> account that Swarm
+                                                  is configured to use. All other workspaces that may exist for
+                                                  other users are primarily used for submitting changes, and so
+                                                  should not have shelved files associated.
+                                                
+                                 </p>
+                              </li>
+                           </ul>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div id="nav" class="toc"></div>
+      <div id="search">
+         <div class="input"><input id="search-text" type="search" placeholder="Search this guide" /><button name="clear" type="button" class="clear"><span class="glyphicon glyphicon-remove-sign"></span></button></div>
+         <div class="controls">
+            <div class="substring"><label><input type="checkbox" class="substring" name="substring" value="hide" checked="1" /><span class="description">Hide partial matches</span></label></div>
+            <div class="highlighter"><label><input type="checkbox" class="highlight" name="highlight" value="show" checked="1" /><span class="description">Highlight matches</span></label></div>
+         </div>
+         <div class="count"><span class="number">0</span> matching pages
+                  
+         </div>
+         <ul class="results"></ul>
+      </div>
+      <div id="footer">
+         <div class="container"><a accesskey="p" class="nav-prev" title="Press 'p', or left-arrow, to view the previous page" href="chapter.code_reviews.html"><span class="glyphicon glyphicon-chevron-left"></span><div class="label">Previous</div>
+               <div class="title">Code reviews</div></a><a accesskey="n" class="nav-next" title="Press 'n', or right-arrow, to view the next page" href="code_reviews.queues.html"><span class="glyphicon glyphicon-chevron-right"></span><div class="label">Next</div>
+               <div class="title">Review queues</div></a></div>
+      </div><script type="text/javascript" src="vendor/jquery/jquery-1.11.3.min.js"></script><script type="text/javascript" src="vendor/bootstrap/js/bootstrap.js"></script><script type="text/javascript" src="vendor/cookie/jquery.cookie.js"></script><script type="text/javascript" src="vendor/highlight/jquery.highlight.js"></script><script type="text/javascript" src="vendor/jsrender/jsrender.js"></script><script type="text/javascript" src="vendor/touchwipe/jquery.touchwipe.min.js"></script><script type="text/javascript" src="vendor/prettify/prettify.js"></script><script defer="1" type="text/javascript" src="js/index.js"></script><script defer="1" type="text/javascript" src="js/toc.js"></script><script defer="1" type="text/javascript" src="js/perforce.js"></script></body>
+</html>

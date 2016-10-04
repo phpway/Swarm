@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Mail;
@@ -126,27 +126,6 @@ class Module
                     if ($change->getType() == Change::RESTRICTED_CHANGE) {
                         return;
                     }
-                }
-
-                // tweak the email to comply with private projects visibility:
-                //  - if email event relates to a single private project, filter toUsers
-                //    to remove those that don't have access to that project
-                //  - if email event relates to multiple projects, filter these projects
-                //    to remove all private ones; if that results in no projects left
-                //    (all were private), we don't send the email
-                $projects       = $activity ? $activity->getProjects() : array();
-                $projectsFilter = $services->get('projects_filter');
-                if (count($projects) === 1) {
-                    $project         = Project::fetch(current(array_keys($projects)), $services->get('p4_admin'));
-                    $mail['toUsers'] = $projectsFilter->filterUsers($mail['toUsers'], $project);
-                } elseif ($projects) {
-                    $projects = $projectsFilter->filterList($projects);
-                    if (!$projects) {
-                        return;
-                    }
-
-                    // we need to set filtered projects back on activity so the email templates can get them
-                    $activity->setProjects($projects);
                 }
 
                 // if sender has no value use the default

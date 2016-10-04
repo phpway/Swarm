@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2016 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Queue\Listener;
@@ -82,7 +82,7 @@ class Ping extends AbstractListenerAggregate
 
         try {
             // check if the file is already in the depot
-            $result = $p4Admin->run('fstat', array('-Oc', '-TlbrType,depotFile', $pingFile));
+            $result = $p4Admin->run('fstat', array('-Oc', '-TlbrType,depotFile,headAction', $pingFile));
 
             // if the ping file is not present, add it
             // the ping file needs to be +X, but we first add it as a regular text file and then retype it
@@ -90,7 +90,7 @@ class Ping extends AbstractListenerAggregate
             // increase the change counter every time we try it
             // retype to +X will still fail if the archive triger is not present, but the change counter will
             // not be increased
-            if ($result->getData(0, 'depotFile') !== $pingFile) {
+            if ($result->getData(0, 'depotFile') !== $pingFile || $result->getData(0, 'headAction') === 'delete') {
                 $storage->write(
                     $pingFile,
                     'Placeholder file for testing Swarm triggers. Do not modify the content of this file.'

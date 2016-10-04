@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2013 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Projects\View\Helper;
@@ -101,10 +101,14 @@ class ProjectToolbar extends AbstractHelper
         }
 
         // render project toolbar
-        $name = $view->escapeHtml($project->getName());
-        $url  = $view->url('project',  array('project' => $project->getId()));
+        $name        = $view->escapeHtml($project->getName());
+        $url         = $view->url('project',  array('project' => $project->getId()));
+        $privateIcon = $project->isPrivate()
+            ? '<i class="icon-eye-close private-project-icon" title="' . $view->te('Private Project') . '"></i>'
+            : '';
         return '<div class="profile-navbar project-navbar navbar" data-project="' . $project->getId() . '">'
              . ' <div class="navbar-inner">'
+             .    $privateIcon
              . '  <a class="brand" href="' . $url . '">' . $name . '</a>'
              . '  <ul class="nav">' . $list . '</ul>'
              . ' </div>'

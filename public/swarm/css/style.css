@@ -1126,6 +1126,15 @@ body.route-login .container-fluid {
     padding: 12px 10px 6px 10px;
     margin: -1px 10px;
 }
+.profile-navbar .private-project-icon {
+    float: left;
+    margin-right: 8px;
+    position: relative;
+    top: 13px;
+}
+.private-project-icon {
+    opacity: .7;
+}
 
 /* user, group & project profile pages */
 .profile-info {
@@ -1204,6 +1213,9 @@ body.route-login .container-fluid {
         margin: 0;
         padding-left: 300px;
     }
+}
+.profile-sidebar.private-project .followers .count {
+    color: #ccc;
 }
 
 /* group profile */
@@ -1992,6 +2004,10 @@ table.range-help > tbody > tr > td:last-child {
     width: 545px;
     padding-top: 8px;
     line-height: 1;
+}
+.project-save-tooltip.popover {
+    width: 430px;
+    max-width: 430px;
 }
 
 /* edit project */

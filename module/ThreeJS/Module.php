@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace ThreeJS;
@@ -36,7 +36,7 @@ class Module
                     $escapeHtmlAttr = $helpers->get('escapeHtmlAttr');
                     $url            = $helpers->get('url');
                     $viewUrl        = $url('view', array('path' => trim($file->getDepotFilename(), '/')))
-                                    . '?v=' . $escapeUrl('@' . $file->get('headChange'));
+                                    . '?v=' . $escapeUrl('@=' . $file->get('headChange'));
                     return '<div class="view img-polaroid threejs" data-url="'
                         .  $viewUrl . '" data-ext="' . $escapeHtmlAttr($extension) . '">'
                         .  '</div>'

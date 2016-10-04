@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Comments\Controller;
@@ -42,9 +42,9 @@ class IndexController extends AbstractActionController
             return;
         }
 
-        // if the topic is provided and relates to a change, ensure it's accessible
+        // if the topic is provided and relates to a review or a change, ensure it's accessible
         if (strlen($topic)) {
-            $this->restrictChangeAccess($topic);
+            $this->restrictAccess($topic);
         }
 
         // handle requests for JSON
@@ -86,8 +86,8 @@ class IndexController extends AbstractActionController
         $services = $this->getServiceLocator();
         $services->get('permissions')->enforce('authenticated');
 
-        // if the topic relates to a change, ensure it's accessible
-        $this->restrictChangeAccess($request->getPost('topic'));
+        // if the topic relates to a review or change, ensure it's accessible
+        $this->restrictAccess($request->getPost('topic'));
 
         $p4Admin  = $services->get('p4_admin');
         $user     = $services->get('user');
@@ -155,9 +155,6 @@ class IndexController extends AbstractActionController
         $user     = $services->get('user');
         $services->get('permissions')->enforce('authenticated');
 
-        // if the topic relates to a change, ensure it's accessible
-        $this->restrictChangeAccess($this->request->getPost('topic'));
-
         // attempt to retrieve the specified comment
         // translate invalid/missing id's into a 404
         try {
@@ -172,6 +169,12 @@ class IndexController extends AbstractActionController
             $this->getResponse()->setStatusCode(404);
             return;
         }
+
+        // if a topic was not provided, try to fetch the comment and use the comment's topic
+        $topic = $this->request->getPost('topic') ?: $comment->get('topic');
+
+        // if the topic relates to a review or a change, ensure it's accessible
+        $this->restrictAccess($topic);
 
         // users can only edit the content of comments they own
         $isContentEdit = $request->getPost('body') !== null || $request->getPost('attachments') !== null;
@@ -329,6 +332,10 @@ class IndexController extends AbstractActionController
                         'name'      => '\Zend\Filter\Callback',
                         'options'   => array(
                             'callback'  => function ($value) {
+                                if (is_array($value)) {
+                                    return $value;
+                                }
+
                                 return $value !== null
                                     ? Json::decode($value, Json::TYPE_ARRAY)
                                     : null;
@@ -473,12 +480,13 @@ class IndexController extends AbstractActionController
     }
 
     /**
-     * Helper to ensure that the given topic does not refer to a forbidden change.
+     * Helper to ensure that the given topic does not refer to a forbidden change
+     * or an inaccessible private project.
      *
-     * @param   string  $topic      the topic to check change access for
-     * @throws  ForbiddenException  if the topic refers to a change the user can't access
+     * @param   string  $topic      the topic to check change/review access for
+     * @throws  ForbiddenException  if the topic refers to a change or project the user can't access
      */
-    protected function restrictChangeAccess($topic)
+    protected function restrictAccess($topic)
     {
         // early exit if the topic is not change related
         if (!preg_match('#(changes|reviews)/([0-9]+)#', $topic, $matches)) {
@@ -489,6 +497,7 @@ class IndexController extends AbstractActionController
         $id    = $matches[2];
 
         // if the topic refers to a review, we need to fetch it to determine the change
+        // and whether the review belongs only to private projects
         // if the topic refers to a change, it always uses the original change id, but for
         // the access check we need to make sure we use the latest/renumbered id.
         $services = $this->getServiceLocator();
@@ -513,7 +522,10 @@ class IndexController extends AbstractActionController
             }
         }
 
-        if ($change === false || !$services->get('changes_filter')->canAccess($change)) {
+        if ($change === false
+            || !$services->get('changes_filter')->canAccess($change)
+            || (isset($review) && !$services->get('projects_filter')->canAccess($review))
+        ) {
             throw new ForbiddenException("You don't have permission to access this topic.");
         }
     }

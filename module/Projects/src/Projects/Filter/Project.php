@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2013 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Projects\Filter;
@@ -306,7 +306,7 @@ class Project extends InputFilter
         );
 
         // ensure jobview is properly formatted
-        // to start with we are only supporting one or more key=value pairs or blank.
+        // to start with we are only supporting one or more field=value pairs or blank.
         $this->add(
             array(
                 'name'         => 'jobview',
@@ -328,7 +328,7 @@ class Project extends InputFilter
                                 $filters = preg_split('/\s+/', $value);
                                 foreach ($filters as $filter) {
                                     if (!preg_match('/^([^=()|]+)=([^=()|]+)$/', $filter)) {
-                                        return "Job filter only supports key=value conditions and the '*' wildcard.";
+                                        return "Job filter only supports field=value conditions and the '*' wildcard.";
                                     }
                                 }
 

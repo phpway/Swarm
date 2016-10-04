@@ -1,9 +1,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 // define our global variable
@@ -36,6 +36,11 @@ swarm.encodeURIDepotPath = function(depotPath) {
 // prepend base-url on relative paths
 swarm.url = function(url) {
     return url.charAt(0) === '/' ? ($('body').data('base-url') || '') + url : url;
+};
+
+// prepend asset-base-url on relative paths
+swarm.assetUrl = function(url) {
+    return url.charAt(0) === '/' ? ($('body').data('asset-base-url') || '') + url : url;
 };
 
 // thin wrapper around local-storage to avoid
@@ -651,7 +656,7 @@ swarm.bees = {
     },
 
     makeBee: function(){
-        var bee = $('<div class="little-bee"><img src="' + swarm.url('/swarm/img/errors/little-bee.png') + '"></div>');
+        var bee = $('<div class="little-bee"><img src="' + swarm.assetUrl('/swarm/img/errors/little-bee.png') + '"></div>');
         swarm.bees.randomize(bee);
         swarm.bees.sprites.push(bee);
         bee.appendTo(swarm.bees.origin);
@@ -701,13 +706,13 @@ $(function(){
             var warning = '';
             if (data.workers === 0) {
                 warning = swarm.te('Hmm... no queue workers? Ask your administrator to check the')
-                    + ' <a href="' + swarm.url('/docs/setup.worker.html') + '">' + swarm.te("worker setup") + '</a>.';
+                    + ' <a href="' + swarm.assetUrl('/docs/setup.worker.html') + '">' + swarm.te("worker setup") + '</a>.';
             } else if (data.pingError) {
                 warning = $.templates(
                       '{{te:"Swarm triggers not working?"}} '
                     + '{{if error !== true}}<div class="ping-error">{{>error}}</div>{{/if}}'
                     + '{{te:"Ask your administrator to check the"}} <a href="{{:url}}">{{te:"triggers setup"}}</a>.'
-                ).render({error: data.pingError, url: swarm.url('/docs/setup.perforce.html#setup.perforce.triggers')});
+                ).render({error: data.pingError, url: swarm.assetUrl('/docs/setup.perforce.html#setup.perforce.triggers')});
             }
 
             if (warning) {

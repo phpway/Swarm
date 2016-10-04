@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2016 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Application\Permissions;
@@ -13,6 +13,7 @@ use P4\Connection\ConnectionInterface;
 use P4\Model\Fielded\Iterator as ModelIterator;
 use Projects\Filter\ProjectList;
 use Projects\Model\Project;
+use Record\Key\AbstractKey;
 use Users\Model\User;
 
 class PrivateProjects
@@ -149,16 +150,40 @@ class PrivateProjects
     }
 
     /**
-     * Return true if given project is accessible to the p4 user set on this instance, false otherwise.
-     * We always grant access to Perforce admin/super users. Access for other users is determined via
-     * canUserAccess() method.
+     * Return true if given item is accessible to the p4 user set on this instance, false otherwise.
      *
-     * @param   Project     $project    project to check accessibility for
-     * @return  bool        true if project is accessible for the user in question, false otherwise
+     * Currently we support items that are either instances of the AbstractKey class that implement
+     * getProjects() method or instances of the Project class.
+     *
+     * Project is accessible if p4 user is admin/super or if granted by canUserAccess() method for
+     * other p4 users.
+     *
+     * AbstractKey record is accessible if it is not related to any projects (i.e. getProjects()
+     * returns empty list) or if at least one project returned by getProjects() is accessible to
+     * the p4 user.
+     *
+     * @param   mixed       $item   item (Project or model implementing getProjects() method) to
+     *                              check accessibility for
+     * @return  bool        true if item is accessible for the user in question, false otherwise
      */
-    public function canAccess(Project $project)
+    public function canAccess($item)
     {
-        return $this->isUserAdmin || $this->canUserAccess($this->userId, $project);
+        // access to projects is always granted for Perforce admin/super users
+        // for other users, access is determined via canUserAccess() method
+        if ($item instanceof Project) {
+            return $this->isUserAdmin || $this->canUserAccess($this->userId, $item);
+        }
+
+        // access to other records is granted if the record is not related to any
+        // projects of if user can access at least one of the related projects
+        if ($item instanceof AbstractKey && method_exists($item, 'getProjects')) {
+            $projects = $item->getProjects();
+            return !$projects || $this->filterList($projects);
+        }
+
+        throw new \InvalidArgumentException(
+            "Item must be a Project or an AbstractKey record implementing getProjects() method."
+        );
     }
 
     /**

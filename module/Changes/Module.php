@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Changes;
@@ -48,11 +48,12 @@ class Module
         $events->attach(
             array('task.commit', 'task.shelve'),
             function ($event) use ($services) {
-                $p4Admin   = $services->get('p4_admin');
-                $id        = $event->getParam('id');
-                $data      = (array) $event->getParam('data') + array('retries' => null);
-                $config    = $services->get('config') + array('git_fusion' => array());
-                $gitConfig = $config['git_fusion'] + array('user' => null, 'depot' => null, 'reown' => array());
+                $p4Admin             = $services->get('p4_admin');
+                $id                  = $event->getParam('id');
+                $data                = (array) $event->getParam('data') + array('retries' => null);
+                $config              = $services->get('config') + array('git_fusion' => array());
+                $gitConfig           = $config['git_fusion'];
+                $gitConfig          += array('user' => null, 'depot' => null, 'reown' => array());
                 $gitConfig['reown'] += array('retries' => null, 'max_wait' => null);
 
                 try {
@@ -169,6 +170,7 @@ class Module
                     }
 
                     // notify members, moderators and followers of affected projects via activity and email
+                    // followers are included only for non-private projects
                     if ($impacted) {
                         $projects = Project::fetchAll(array(Project::FETCH_BY_IDS => array_keys($impacted)), $p4Admin);
                         foreach ($projects as $projectId => $project) {
@@ -179,7 +181,9 @@ class Module
 
                             $activity->addFollowers($members);
                             $activity->addFollowers($moderators);
-                            $activity->addFollowers($followers);
+                            if (!$project->isPrivate()) {
+                                $activity->addFollowers($followers);
+                            }
 
                             // email notification can be disabled per project
                             $emailUsers = $project->getEmailFlag('change_email_project_users');
@@ -319,9 +323,9 @@ class Module
         $events->attach(
             'task.changesaved',
             function ($event) use ($services) {
-                $id       = $event->getParam('id');
-                $p4Admin  = $services->get('p4_admin');
-                $config   = $services->get('config');
+                $id      = $event->getParam('id');
+                $p4Admin = $services->get('p4_admin');
+                $config  = $services->get('config');
 
                 // if we're not configured to synchronize descriptions, bail out
                 if (!isset($config['reviews']['sync_descriptions']) || !$config['reviews']['sync_descriptions']) {

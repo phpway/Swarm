@@ -1,9 +1,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2015 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 $(function(){
@@ -172,7 +172,10 @@ $(function(){
 
             // format item label
             $this.find('a').html($.templates(
-                '{{>label}} {{if detail}}<span class="muted">{{>detail}}</span>{{/if}}'
+                  '{{if private}}'
+                +  '<i class="icon-eye-close private-project-icon" title="' + swarm.te('Private Project') + '"></i> '
+                + '{{/if}}'
+                + '{{>label}} {{if detail}}<span class="muted">{{>detail}}</span>{{/if}}'
             ).render(item));
 
             if (item.type !== type) {

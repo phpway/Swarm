@@ -1,0 +1,1065 @@
+<!DOCTYPE html><html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <title>Post-install configuration options // Swarm 2016.2 Guide</title>
+      <meta name="generator" content="DocBook XSL Stylesheets V1.78.1 with Perforce customizations" />
+      <link rel="home" href="copyright.html" title="Swarm 2016.2 Guide" />
+      <link rel="up" href="chapter.setup.html" title="Setting up" />
+      <link rel="prev" href="setup.worker.html" title="Set up a recurring task to spawn workers" />
+      <link rel="next" href="setup.upgrade.html" title="Upgrading Swarm" />
+      <meta name="Section-title" content="Post-install configuration options" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="stylesheet" href="vendor/bootstrap/css/bootstrap.css" />
+      <link rel="stylesheet" href="vendor/prettify/prettify.css" />
+      <link rel="stylesheet" href="css/perforce.css" />
+      <link rel="stylesheet" href="css/print.css" media="print" />
+      <link rel="shortcut icon" href="images/favicon.ico" />
+      <!--[if lt IE 9]>
+  <script type="text/javascript" src="vendor/respond/respond.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="css/ie.css"/>
+<![endif]-->
+      <link rel="stylesheet" type="text/css" href="css/swarm.css" />
+   </head>
+   <body><a id="page-top"></a><div id="header">
+         <div class="container"><button name="toc" type="button" class="toc"><span class="glyphicon glyphicon-list"></span></button><span class="logo"><a href="http://www.perforce.com/documentation"></a></span><h1><a href="index.html" class="title"><span class="brand"></span><span class="guide-title">Swarm 2016.2 Guide</span><span class="guide-subtitle">
+                                   (September 2016)
+                                 </span></a></h1><button name="search" type="button" class="search" title="Search this guide"><span class="glyphicon glyphicon-search"></span></button></div>
+         <div id="progress"></div>
+      </div>
+      <div id="content" class="content" tabindex="-1">
+         <div class="container">
+            <!---->
+            <div class="section" id="setup.post">
+               <div class="titlepage">
+                  <div>
+                     <div>
+                        <h2 class="title" style="clear: both">Post-install configuration options</h2>
+                     </div>
+                  </div>
+               </div>
+               <p>
+                      There are a few options for customizing your Swarm installation's operation.
+                      This section covers the options that are officially supported:
+                    
+               </p>
+               <div class="itemizedlist">
+                  <ul class="itemizedlist" style="list-style-type: disc; ">
+                     <li class="listitem">
+                        <p>
+                                   <a class="xref" href="setup.post.html#setup.post.ssl" title="HTTPS">HTTPS</a>
+                                 
+                        </p>
+                     </li>
+                     <li class="listitem">
+                        <p>
+                                   <a class="xref" href="setup.post.html#setup.post.subfolder" title="Run Swarm in a sub-folder of an existing web site">Run Swarm in a sub-folder of an existing web site</a>
+                                 
+                        </p>
+                     </li>
+                     <li class="listitem">
+                        <p>
+                                   <a class="xref" href="setup.post.html#setup.post.port" title="Run Swarm's virtual host on a custom port">Run Swarm's virtual host on a custom port</a>
+                                 
+                        </p>
+                     </li>
+                  </ul>
+               </div>
+               <p>
+                      Before undertaking any of the following customization options, ensure that
+                      you have backed up your Swarm virtual host configuration. Choose the most
+                      appropriate option:
+                    
+               </p>
+               <div class="itemizedlist" id="setup.post.backup">
+                  <ul class="itemizedlist" style="list-style-type: disc; ">
+                     <li class="listitem">
+                        <p>
+                                   If your Apache configuration directory contains the directories
+                                   <code class="filename">sites-available</code> and
+                                   <code class="filename">sites-enabled</code>:
+                                 
+                        </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>cd <em class="replaceable"><code>/path/to/apache/configuration</code></em>/..</strong></span>
+$ <span class="command"><strong>cp -a sites-available sites-available.bak</strong></span>
+</pre><div class="important admonition">
+                           <h3 class="title">Important</h3>
+                           <p>
+                                        If the <code class="filename">sites-enabled</code> directory contains files,
+                                        and not just symbolic links, you need to backup this folder as well:
+                                      
+                           </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>cd <em class="replaceable"><code>/path/to/apache/configuration</code></em>/..</strong></span>
+$ <span class="command"><strong>cp -a sites-enabled sites-enabled.bak</strong></span>
+</pre></div>
+                     </li>
+                     <li class="listitem">
+                        <p>
+                                   For CentOS/RHEL systems, if you used the
+                                   <a class="link" href="setup.packages.html" title="Swarm packages">Swarm packages</a> to
+                                   install Swarm:
+                                 
+                        </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>cd <em class="replaceable"><code>/path/to/apache/configuration</code></em>/..</strong></span>
+$ <span class="command"><strong>cp -a conf.d conf.d.bak</strong></span>
+</pre></li>
+                     <li class="listitem">
+                        <p>
+                                   Otherwise, backup your Apache configuration.
+                                 
+                        </p>
+                     </li>
+                  </ul>
+               </div>
+               <div class="section" id="setup.post.ssl">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">HTTPS</h3>
+                        </div>
+                     </div>
+                  </div>
+                  <p>
+                           This section describes how to make your Swarm installation more secure by
+                           using HTTPS.
+                         
+                  </p>
+                  <p>
+                           Before you begin the following procedure, locate your system's Apache
+                           configuration. Common configuration directories include:
+                         
+                  </p>
+                  <div class="itemizedlist">
+                     <ul class="itemizedlist" style="list-style-type: disc; ">
+                        <li class="listitem">
+                           <p>
+                                        <code class="filename">/etc/httpd/conf/</code>
+                                      
+                           </p>
+                        </li>
+                        <li class="listitem">
+                           <p>
+                                        <code class="filename">/etc/apache2/</code>
+                                      
+                           </p>
+                        </li>
+                        <li class="listitem">
+                           <p>
+                                        <code class="filename">/Applications/XAMPP/etc/</code>
+                                      
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <p>
+                           Within the Apache configuration path, the main Apache configuration file
+                           is usually named one of the following:
+                         
+                  </p>
+                  <div class="itemizedlist">
+                     <ul class="itemizedlist" style="list-style-type: disc; ">
+                        <li class="listitem">
+                           <p>
+                                        <code class="filename">httpd.conf</code>
+                                      
+                           </p>
+                        </li>
+                        <li class="listitem">
+                           <p>
+                                        <code class="filename">apache2.conf</code>
+                                      
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <div class="tip admonition">
+                     <h3 class="title">Tip</h3>
+                     <p>
+                                A longer discussion on the possible locations and names of Apache
+                                configuration files is available here:
+                     </p>
+                     <div class="literallayout">
+                        <p><br />
+                           
+                        </p>
+                     </div>
+                     <p>
+                                <a class="link" href="https://wiki.apache.org/httpd/DistrosDefaultLayout" target="_top">https://wiki.apache.org/httpd/DistrosDefaultLayout</a>
+                              
+                     </p>
+                  </div>
+                  <div class="procedure">
+                     <ol class="procedure" type="1">
+                        <li class="step">
+                           <p>
+                                        Enable SSL in Apache.
+                                      
+                           </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo a2enmod ssl</strong></span>
+</pre></li>
+                        <li class="step">
+                           <p>
+                                        Create a directory to store certificates.
+                                      
+                           </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo mkdir -p /etc/apache2/ssl</strong></span>
+</pre></li>
+                        <li class="step">
+                           <p>
+                                        Create a certificate/key pair.
+                                      
+                           </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>cd /etc/apache2/ssl</strong></span>
+$ <span class="command"><strong>sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout apache.key -out apache.crt</strong></span>
+</pre><p>
+                                        This command generates a private key and a certificate. To form the
+                                        certificate, <span class="command"><strong>openssl</strong></span> prompts you for several
+                                        details:
+                                      
+                           </p><pre class="screen">
+Generating a 2048 bit RSA private key
+...................+++
+....................................+++
+writing new private key to 'apache.key'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:<em class="replaceable"><code>CA</code></em>
+State or Province Name (full name) [Some-State]:<em class="replaceable"><code>British Columbia</code></em>
+Locality Name (eg, city) []:<em class="replaceable"><code>Victoria</code></em>
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:<em class="replaceable"><code>Perforce Software</code></em>
+Organizational Unit Name (eg, section) []:<em class="replaceable"><code>Swarm development team</code></em>
+Common Name (e.g. server FQDN or YOUR name) []:<em class="replaceable"><code>myswarm.host</code></em>
+Email Address []:<em class="replaceable"><code>admin@myswarm.host</code></em>
+</pre><p>
+                                        The output above includes some example details. You should replace
+                                        anything in italics with your own details. Since the certificate
+                                        request details that can help users determine whether your certificate
+                                        is valid, enter legitimate information whenever possible.
+                                      
+                           </p>
+                           <div class="important admonition">
+                              <h3 class="title">Important</h3>
+                              <p>
+                                             The <code class="literal">Common Name</code> field <span class="bold"><strong>must
+                                                   match</strong></span> the hostname for your Swarm installation exactly.
+                                           
+                              </p>
+                           </div>
+                        </li>
+                        <li class="step">
+                           <p>
+                                        Secure the certificate directory.
+                                      
+                           </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo chmod 600 /etc/apache2/ssl</strong></span>
+</pre></li>
+                        <li class="step">
+                           <p>
+                                        Edit the virtual host configuration.
+                                      
+                           </p>
+                           <div class="note admonition">
+                              <h3 class="title">Note</h3>
+                              <p>
+                                             The virtual host configuration should be in the file you
+                                             <a class="link" href="setup.post.html#setup.post.backup">backed up initially</a>.
+                                           
+                              </p>
+                           </div>
+                           <div class="itemizedlist">
+                              <ul class="itemizedlist" style="list-style-type: disc; ">
+                                 <li class="listitem">
+                                    <p>
+                                                     For Apache 2.2, edit the virtual host configuration to match:
+                                                   
+                                    </p><pre lang="apache" class="programlisting">
+&lt;VirtualHost *:80&gt;
+    ServerName <em class="replaceable"><code>myswarm.host</code></em>
+    ServerAlias <em class="replaceable"><code>myswarm</code></em>
+    ErrorLog "<em class="replaceable"><code>/path/to/apache/logs/myswarm</code></em>.error_log"
+    CustomLog "<em class="replaceable"><code>/path/to/apache/logs/myswarm</code></em>.access_log" common
+    DocumentRoot "<em class="replaceable"><code>/path/to/swarm/</code></em>public"
+    &lt;Directory "<em class="replaceable"><code>/path/to/swarm/</code></em>public"&gt;
+        AllowOverride All
+        Require all granted
+    &lt;/Directory&gt;
+
+    Redirect permanent / https://<em class="replaceable"><code>myswarm.host</code></em>
+&lt;/VirtualHost&gt;
+
+&lt;VirtualHost *:443&gt;
+    SSLEngine on
+    SSLCertificateFile /etc/apache2/ssl/apache.crt
+    SSLCertificateKeyFile /etc/apache2/ssl/apache.key
+
+    ServerName <em class="replaceable"><code>myswarm.host</code></em>
+    ServerAlias <em class="replaceable"><code>myswarm</code></em>
+    ErrorLog "<em class="replaceable"><code>/path/to/apache/logs/myswarm</code></em>.error_log"
+    CustomLog "<em class="replaceable"><code>/path/to/apache/logs/myswarm</code></em>.access_log" common
+    DocumentRoot "<em class="replaceable"><code>/path/to/swarm/</code></em>public"
+    &lt;Directory "<em class="replaceable"><code>/path/to/swarm/</code></em>public"&gt;
+        AllowOverride All
+        Order allow,deny
+        Allow from all
+    &lt;/Directory&gt;
+&lt;/VirtualHost&gt;
+</pre></li>
+                                 <li class="listitem">
+                                    <p>
+                                                     For Apache 2.4, edit the virtual host configuration to match:
+                                                   
+                                    </p><pre lang="apache" class="programlisting">
+&lt;VirtualHost *:80&gt;
+    ServerName <em class="replaceable"><code>myswarm</code></em>
+    ServerAlias <em class="replaceable"><code>myswarm.host</code></em>
+    ErrorLog "<em class="replaceable"><code>/path/to/apache/logs/myswarm</code></em>.error_log"
+    CustomLog "<em class="replaceable"><code>/path/to/apache/logs/myswarm</code></em>.access_log" common
+    DocumentRoot "<em class="replaceable"><code>/path/to/swarm/</code></em>public"
+    &lt;Directory "<em class="replaceable"><code>/path/to/swarm/</code></em>public"&gt;
+        AllowOverride All
+        Require all granted
+    &lt;/Directory&gt;
+&lt;/VirtualHost&gt;
+
+&lt;VirtualHost *:443&gt;
+    SSLEngine on
+    SSLCertificateFile /etc/apache2/ssl/apache.crt
+    SSLCertificateKeyFile /etc/apache2/ssl/apache.key
+
+    ServerName <em class="replaceable"><code>myswarm.host</code></em>
+    ServerAlias <em class="replaceable"><code>myswarm</code></em>
+    ErrorLog "<em class="replaceable"><code>/path/to/apache/logs/myswarm</code></em>.error_log"
+    CustomLog "<em class="replaceable"><code>/path/to/apache/logs/myswarm</code></em>.access_log" common
+    DocumentRoot "<em class="replaceable"><code>/path/to/swarm/</code></em>public"
+    &lt;Directory "<em class="replaceable"><code>/path/to/swarm/</code></em>public"&gt;
+        AllowOverride All
+        Require all granted
+    &lt;/Directory&gt;
+&lt;/VirtualHost&gt;
+</pre></li>
+                              </ul>
+                           </div>
+                           <div class="tip admonition">
+                              <h3 class="title">Tip</h3>
+                              <p>
+                                             See Apache's virtual host documentation for details:
+                                             
+                              </p>
+                              <div class="literallayout">
+                                 <p><br />
+                                    
+                                 </p>
+                              </div>
+                              <p>
+                                             <a class="link" href="https://httpd.apache.org/docs/2.2/vhosts/" target="_top">https://httpd.apache.org/docs/2.2/vhosts/</a>
+                                             
+                              </p>
+                              <div class="literallayout">
+                                 <p><br />
+                                    
+                                 </p>
+                              </div>
+                              <p>
+                                             <a class="link" href="https://httpd.apache.org/docs/2.4/vhosts/" target="_top">https://httpd.apache.org/docs/2.4/vhosts/</a>
+                                           
+                              </p>
+                           </div>
+                        </li>
+                        <li class="step">
+                           <p>
+                                        Customize the virtual host definition.
+                                      
+                           </p>
+                           <ol type="a" class="substeps">
+                              <li class="step">
+                                 <p>
+                                                  Replace <em class="replaceable"><code>myswarm.host</code></em> with the hostname
+                                                  for Swarm on your network.
+                                                
+                                 </p>
+                              </li>
+                              <li class="step">
+                                 <p>
+                                                  Replace <em class="replaceable"><code>myswarm</code></em> with the name of the
+                                                  subdomain hosting Swarm. Many administrators choose
+                                                  <em class="replaceable"><code>swarm</code></em>.
+                                                
+                                 </p>
+                                 <p>
+                                                  Note the string <em class="replaceable"><code>myswarm</code></em> in the log file
+                                                  paths: this should match the subdomain name and prefix for the log
+                                                  files, to help coordinate the active host with the log files for
+                                                  that host. Doing this is particularly useful when your Apache
+                                                  server hosts multiple instances of Swarm.
+                                                
+                                 </p>
+                              </li>
+                              <li class="step">
+                                 <p>
+                                                  Replace <em class="replaceable"><code>/path/to/apache/logs</code></em> with the
+                                                  path where your Apache store its log files. Apache's log files are
+                                                  typically named <code class="filename">access_log</code> and
+                                                  <code class="filename">error_log</code>.
+                                                
+                                 </p>
+                              </li>
+                              <li class="step">
+                                 <p>
+                                                  Replace <em class="replaceable"><code>/path/to/swarm</code></em> with the path to
+                                                  the Swarm directory.
+                                                
+                                 </p>
+                              </li>
+                           </ol>
+                        </li>
+                        <li class="step">
+                           <p>
+                                        Restart your web server.
+                                      
+                           </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo apachectl restart</strong></span>
+</pre></li>
+                        <li class="step">
+                           <p>
+                                        Adjust your firewall configuration to allow connections to the
+                                        standard SSL port for web servers.
+                                      
+                           </p>
+                           <div class="itemizedlist">
+                              <ul class="itemizedlist" style="list-style-type: disc; ">
+                                 <li class="listitem">
+                                    <p>
+                                                     For CentOS/RHEL 6.6+:
+                                                   
+                                    </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo lokkit -p 443:tcp</strong></span>
+</pre></li>
+                                 <li class="listitem">
+                                    <p>
+                                                     For CentOS/RHEL 7+:
+                                                   
+                                    </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo firewall-cmd --zone=public --add-port=443/tcp --permanent</strong></span>
+$ <span class="command"><strong>sudo systemctl reload firewalld</strong></span>
+</pre></li>
+                                 <li class="listitem">
+                                    <p>
+                                                     For other distributions, consult with your network administrator
+                                                     or operating system documentation to determine how to adjust your
+                                                     firewall configuration.
+                                                   
+                                    </p>
+                                 </li>
+                              </ul>
+                           </div>
+                        </li>
+                        <li class="step">
+                           <p>
+                                        Test your HTTPS URL from a web browser.
+                                      
+                           </p>
+                           <div class="important admonition">
+                              <h3 class="title">Important</h3>
+                              <p>
+                                             If the <em class="replaceable"><code>myswarm.host</code></em> value in the virtual
+                                             host configuration and the certificate do not match,
+                                             <span class="application">P4V</span>'s integration with Swarm fails with
+                                             the message <code class="literal">SSL handshake failed</code>.
+                                           
+                              </p>
+                              <p>
+                                             Also, when a reverse DNS lookup is performed
+                                             <em class="replaceable"><code>myswarm.host</code></em> should be the answer when
+                                             querying for the Swarm server's IP address.
+                                           
+                              </p>
+                           </div>
+                        </li>
+                     </ol>
+                  </div>
+               </div>
+               <div class="section" id="setup.post.subfolder">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">Run Swarm in a sub-folder of an existing web site</h3>
+                        </div>
+                     </div>
+                  </div>
+                  <p>
+                           If you cannot run Swarm in its own virtual host, which might be necessary
+                           when you do not control the hostname to be used with Swarm, installing
+                           Swarm in a sub-folder of an existing virtual host configuration can be a
+                           good solution.
+                         
+                  </p>
+                  <p>
+                           Installing Swarm in a sub-folder requires modification of the previous
+                           installation steps covered in this chapter:
+                         
+                  </p>
+                  <div class="itemizedlist">
+                     <ul class="itemizedlist" style="list-style-type: disc; ">
+                        <li class="listitem">
+                           <p>
+                                        The <a class="xref" href="setup.apache.html" title="Apache configuration">Apache configuration</a> is entirely different; instead of
+                                        establishing a new virtual host, you need to
+                                        <a class="link" href="setup.post.html#setup.post.subfolder.apache" title="Apache configuration">modify an existing virtual
+                                           host configuration</a>. Often, this would be Apache's default site.
+                                      
+                           </p>
+                        </li>
+                        <li class="listitem">
+                           <p>
+                                        <a class="link" href="setup.swarm.html" title="Swarm configuration">Swarm's configuration file</a> requires
+                                        <a class="link" href="setup.post.html#setup.post.subfolder.swarm" title="Swarm configuration">an extra item</a>.
+                                      
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <p>
+                           The following sections cover the specifics of sub-folder installation.
+                         
+                  </p>
+                  <div class="note admonition">
+                     <h3 class="title">Note</h3>
+                     <p>
+                                See <a class="xref" href="admin.environment.html#admin.environment.base_url" title="base_url">base_url</a> for more details.
+                              
+                     </p>
+                  </div>
+                  <div class="important admonition">
+                     <h3 class="title">Important</h3>
+                     <p>
+                                If you used the <a class="link" href="setup.ova.html" title="OVA configuration">Swarm OVA</a> or
+                                <a class="link" href="setup.packages.html" title="Swarm packages">Swarm packages</a> to install Swarm,
+                                you can adjust Swarm's configuration using the package configuration
+                                script <span class="command"><strong>/opt/perforce/swarm/sbin/configure-swarm.sh</strong></span>.
+                              
+                     </p>
+                     <p>
+                                <span class="bold"><strong><span class="command"><strong>configure-swarm.sh</strong></span> does not
+                                      read any existing Swarm configuration; you must provide all of the
+                                      configuration details each time you execute
+                                      <span class="command"><strong>configure-swarm.sh</strong></span></strong></span>:
+                              
+                     </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo /opt/perforce/swarm/sbin/configure-swarm.sh -n -p <em class="replaceable"><code>myp4host:1666</code></em> -u <em class="replaceable"><code>swarm</code></em> -w <em class="replaceable"><code>password</code></em> -e <em class="replaceable"><code>mx.example.com</code></em> -H <em class="replaceable"><code>myhost</code></em> -B /<em class="replaceable"><code>swarm</code></em></strong></span>
+</pre><p>
+                                In the example above, the <code class="option">-B</code> option is used to specify
+                                the name of the sub-folder.
+                              
+                     </p>
+                     <p>
+                                If you use <span class="command"><strong>configure-swarm.sh</strong></span> to adjust Swarm's
+                                configuration, you only need to follow the
+                                <a class="xref" href="setup.post.html#setup.post.subfolder.apache" title="Apache configuration">Apache configuration</a> steps described below; all
+                                of the changes listed in <a class="xref" href="setup.post.html#setup.post.subfolder.swarm" title="Swarm configuration">Swarm configuration</a>
+                                section below have been completed by
+                                <span class="command"><strong>configure-swarm.sh</strong></span>.
+                              
+                     </p>
+                  </div>
+                  <div class="section" id="setup.post.subfolder.apache">
+                     <div class="titlepage">
+                        <div>
+                           <div>
+                              <h4 class="title">Apache configuration</h4>
+                           </div>
+                        </div>
+                     </div>
+                     <div class="procedure">
+                        <ol class="procedure" type="1">
+                           <li class="step">
+                              <p>
+                                             Ensure that the <a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a> is <span class="emphasis"><em>not</em></span> within the
+                                             document root of the intended virtual host.
+                                           
+                              </p>
+                              <p>
+                                             This step ensures that Swarm's source code and configuration is
+                                             impossible to browse, preventing access to important details such as
+                                             stored credentials, and active sessions and workspaces.
+                                           
+                              </p>
+                           </li>
+                           <li class="step">
+                              <p>
+                                             Adjust the virtual host configuration that you are already using.
+                                           
+                              </p>
+                              <div class="note admonition">
+                                 <h3 class="title">Note</h3>
+                                 <p>
+                                                  Depending on the method used to install Swarm, the filename for
+                                                  virtual host configuration you need to edit is:
+                                                
+                                 </p>
+                                 <div class="itemizedlist">
+                                    <ul class="itemizedlist" style="list-style-type: disc; ">
+                                       <li class="listitem">
+                                          <p>
+                                                               For <a class="link" href="setup.ova.html" title="OVA configuration">Swarm OVA</a> or
+                                                               <a class="link" href="setup.packages.html" title="Swarm packages">Swarm package</a>
+                                                               installations, edit
+                                                               <code class="filename">perforce-swarm-site.conf</code>.
+                                                             
+                                          </p>
+                                       </li>
+                                       <li class="listitem">
+                                          <p>
+                                                               For manual installations following Swarm's
+                                                               <a class="link" href="setup.apache.html" title="Apache configuration">recommended Apache
+                                                                  configuration</a>, edit <code class="filename">swarm</code>.
+                                                             
+                                          </p>
+                                       </li>
+                                       <li class="listitem">
+                                          <p>
+                                                               For other installations, you may have to edit
+                                                               <code class="filename">httpd.conf</code> or nearby files.
+                                                             
+                                          </p>
+                                       </li>
+                                    </ul>
+                                 </div>
+                              </div>
+                              <div class="itemizedlist">
+                                 <ul class="itemizedlist" style="list-style-type: disc; ">
+                                    <li class="listitem">
+                                       <p>
+                                                          For Apache 2.2, add the following lines to the virtual host
+                                                          definition:
+                                                        
+                                       </p><pre lang="apache" class="programlisting">
+Alias /<em class="replaceable"><code>swarm</code></em> <a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/public
+
+&lt;Directory "<a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/public"&gt;
+  AllowOverride All
+  Order allow,deny
+  Allow from All
+&lt;/Directory&gt;
+</pre></li>
+                                    <li class="listitem">
+                                       <p>
+                                                          For Apache 2.4, add the following lines to the virtual host
+                                                          definition:
+                                                        
+                                       </p><pre lang="apache" class="programlisting">
+Alias /<em class="replaceable"><code>swarm</code></em> <a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/public
+
+&lt;Directory "<a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/public"&gt;
+  AllowOverride All
+  Require all granted
+&lt;/Directory&gt;
+</pre></li>
+                                 </ul>
+                              </div>
+                              <p>
+                                             The <code class="literal">Alias</code> line configures Apache to respond
+                                             to requests to <code class="literal">https://myhost/swarm</code> with
+                                             content from Swarm's <code class="filename">public</code>
+                                             folder. You can change the
+                                             <code class="filename">/<em class="replaceable"><code>swarm</code></em></code> portion
+                                             of the <code class="literal">Alias</code> line to anything you want.
+                                           
+                              </p>
+                              <p>
+                                             The <code class="literal">&lt;Directory&gt;</code> block grants access to
+                                             everything within Swarm's <code class="filename">public</code> folder.
+                                             Replace <a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a> with the actual path to Swarm.
+                                           
+                              </p>
+                           </li>
+                           <li class="step">
+                              <p>
+                                             Restart your web server.
+                                           
+                              </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo apachectl restart</strong></span>
+</pre></li>
+                        </ol>
+                     </div>
+                  </div>
+                  <div class="section" id="setup.post.subfolder.swarm">
+                     <div class="titlepage">
+                        <div>
+                           <div>
+                              <h4 class="title">Swarm configuration</h4>
+                           </div>
+                        </div>
+                     </div>
+                     <p>
+                                To successfully operate within a sub-folder, the <code class="filename"><a class="link" href="admin.swarm_root.html" title="swarm_root"><em class="replaceable"><code>SWARM_ROOT</code></em></a>/data/config.php</code> file needs
+                                to be adjusted to contain the following lines (as a peer of the
+                                <code class="literal">p4</code> item):
+                              
+                     </p><pre lang="php" class="programlisting">
+        'environment' =&gt; array(
+            'base_url' =&gt; '/<em class="replaceable"><code>swarm</code></em>'
+        ),
+</pre><p>
+                                Ensure that <code class="filename">/<em class="replaceable"><code>swarm</code></em></code>
+                                matches the first item in the <code class="literal">Alias</code> line in the
+                                virtual host configuration.
+                              
+                     </p>
+                     <div class="note admonition">
+                        <h3 class="title">Note</h3>
+                        <p>
+                                     See <a class="xref" href="admin.environment.html" title="Environment">Environment</a> for more details.
+                                   
+                        </p>
+                     </div>
+                  </div>
+                  <div class="section" id="setup.post.subfolder.cron">
+                     <div class="titlepage">
+                        <div>
+                           <div>
+                              <h4 class="title">Cron configuration</h4>
+                           </div>
+                        </div>
+                     </div>
+                     <p>
+                                Swarm's <a class="link" href="setup.worker.html" title="Set up a recurring task to spawn workers">recurring task</a> configuration
+                                must be updated to reflect the sub-folder that you have configured in
+                                <a class="link" href="setup.post.html#setup.post.subfolder.apache" title="Apache configuration">Apache's</a> and
+                                <a class="link" href="setup.post.html#setup.post.subfolder.swarm" title="Swarm configuration">Swarm's</a>
+                                configurations.
+                              
+                     </p>
+                     <div class="procedure">
+                        <ol class="procedure" type="1">
+                           <li class="step">
+                              <p>
+                                             Edit <code class="filename">/etc/cron.d/helix-swarm</code>.
+                                           
+                              </p>
+                           </li>
+                           <li class="step">
+                              <p>
+                                             Replace:
+                                           
+                              </p><pre class="programlisting">
+https://<em class="replaceable"><code>myswarm.url</code></em>/queue/worker
+</pre><p>
+                                             with:
+                                           
+                              </p><pre class="programlisting">
+https://<em class="replaceable"><code>myswarm.url</code></em>/<em class="replaceable"><code>swarm</code></em>/queue/worker
+</pre><p>
+                                             Where <em class="replaceable"><code>myswarm.url</code></em> is the hostname of your
+                                             Swarm installation, and <em class="replaceable"><code>swarm</code></em> is the
+                                             sub-folder you wish to use.
+                                           
+                              </p>
+                           </li>
+                           <li class="step">
+                              <p>
+                                             Save the edited file.
+                                           
+                              </p>
+                              <p>
+                                             New workers should be started at the start of the next minute.
+                                           
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                  </div>
+               </div>
+               <div class="section" id="setup.post.port">
+                  <div class="titlepage">
+                     <div>
+                        <div>
+                           <h3 class="title">Run Swarm's virtual host on a custom port</h3>
+                        </div>
+                     </div>
+                  </div>
+                  <p>
+                           If you cannot run Swarm on port 80 (or port 443 for HTTPS), perhaps
+                           because you do not have root access, it is possible to run Swarm on a
+                           custom port.
+                         
+                  </p>
+                  <p>
+                           Installing Swarm to use a custom port requires modification of the
+                           previous installation steps covered in this chapter:
+                         
+                  </p>
+                  <div class="itemizedlist">
+                     <ul class="itemizedlist" style="list-style-type: disc; ">
+                        <li class="listitem">
+                           <p>
+                                        The <a class="xref" href="setup.apache.html" title="Apache configuration">Apache configuration</a> is slightly different, requiring 
+                                        <a class="link" href="setup.post.html#setup.post.port.apache" title="Apache configuration">modification of Swarm's virtual
+                                           host definition</a>.
+                                      
+                           </p>
+                        </li>
+                     </ul>
+                  </div>
+                  <p>
+                           The following section covers the specifics of the custom port
+                           configuration.
+                         
+                  </p>
+                  <div class="note admonition">
+                     <h3 class="title">Note</h3>
+                     <p>
+                                In addition to the following instructions, you may also need to apply
+                                the <em class="parameter"><code>external_url</code></em> item described in the
+                                <a class="xref" href="admin.environment.html" title="Environment">Environment</a> section if your Swarm is behind a
+                                proxy, or you have multiple Swarm instances connected to the Helix
+                                Versioning Engine.
+                              
+                     </p>
+                  </div>
+                  <div class="important admonition">
+                     <h3 class="title">Important</h3>
+                     <p>
+                                If you used the <a class="link" href="setup.ova.html" title="OVA configuration">Swarm OVA</a> or
+                                <a class="link" href="setup.packages.html" title="Swarm packages">Swarm packages</a> to install Swarm,
+                                you can adjust Swarm's configuration using the package configuration
+                                script <span class="command"><strong>/opt/perforce/swarm/sbin/configure-swarm.sh</strong></span>.
+                              
+                     </p>
+                     <p>
+                                <span class="bold"><strong><span class="command"><strong>configure-swarm.sh</strong></span> does not
+                                      read any existing Swarm configuration; you must provide all of the
+                                      configuration details each time you execute
+                                      <span class="command"><strong>configure-swarm.sh</strong></span></strong></span>:
+                              
+                     </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo /opt/perforce/swarm/sbin/configure-swarm.sh -n -p <em class="replaceable"><code>myp4host:1666</code></em> -u <em class="replaceable"><code>swarm</code></em> -w <em class="replaceable"><code>password</code></em> -e <em class="replaceable"><code>mx.example.com</code></em> -H <em class="replaceable"><code>myhost</code></em> -P <em class="replaceable"><code>8080</code></em></strong></span>
+</pre><p>
+                                In the example above, the <code class="option">-P</code> option is used to specify
+                                the custom port that Swarm should use.
+                              
+                     </p>
+                     <p>
+                                If you use <span class="command"><strong>configure-swarm.sh</strong></span> to adjust Swarm's
+                                configuration, follow the additional steps that it describes. Once those
+                                steps are complete, do not perform any of the steps described below.
+                              
+                     </p>
+                  </div>
+                  <div class="section" id="setup.post.port.apache">
+                     <div class="titlepage">
+                        <div>
+                           <div>
+                              <h4 class="title">Apache configuration</h4>
+                           </div>
+                        </div>
+                     </div>
+                     <div class="procedure">
+                        <ol class="procedure" type="1">
+                           <li class="step">
+                              <p>
+                                             Edit the virtual host configuration.
+                                           
+                              </p>
+                              <div class="note admonition">
+                                 <h3 class="title">Note</h3>
+                                 <p>
+                                                  Depending on the method used to install Swarm, the filename for
+                                                  virtual host configuration you need to edit is:
+                                                
+                                 </p>
+                                 <div class="itemizedlist">
+                                    <ul class="itemizedlist" style="list-style-type: disc; ">
+                                       <li class="listitem">
+                                          <p>
+                                                               For <a class="link" href="setup.ova.html" title="OVA configuration">Swarm OVA</a> or
+                                                               <a class="link" href="setup.packages.html" title="Swarm packages">Swarm package</a>
+                                                               installations, edit
+                                                               <code class="filename">perforce-swarm-site.conf</code>.
+                                                             
+                                          </p>
+                                       </li>
+                                       <li class="listitem">
+                                          <p>
+                                                               For manual installations following Swarm's
+                                                               <a class="link" href="setup.apache.html" title="Apache configuration">recommended Apache
+                                                                  configuration</a>, edit <code class="filename">swarm</code>.
+                                                             
+                                          </p>
+                                       </li>
+                                       <li class="listitem">
+                                          <p>
+                                                               For other installations, you may have to edit
+                                                               <code class="filename">httpd.conf</code> or nearby files.
+                                                             
+                                          </p>
+                                       </li>
+                                    </ul>
+                                 </div>
+                              </div>
+                              <ol type="a" class="substeps">
+                                 <li class="step">
+                                    <p>
+                                                       Add the following line <span class="emphasis"><em>outside</em></span> of the
+                                                       <code class="literal">&lt;VirtualHost&gt;</code> block:
+                                                     
+                                    </p><pre lang="apache" class="programlisting">
+Listen <em class="replaceable"><code>8080</code></em>
+</pre></li>
+                                 <li class="step">
+                                    <p>
+                                                       Edit the <code class="literal">&lt;VirtualHost *:80&gt;</code> line to
+                                                       read:
+                                                     
+                                    </p><pre lang="apache" class="programlisting">
+&lt;VirtualHost *:<em class="replaceable"><code>8080</code></em>&gt;
+</pre></li>
+                              </ol>
+                              <p>
+                                             For both lines, replace <em class="replaceable"><code>8080</code></em> with the
+                                             custom port you wish to use.
+                                           
+                              </p>
+                              <div class="important admonition">
+                                 <h3 class="title">Important</h3>
+                                 <p>
+                                                  If you choose a port that is already in use, Apache refuses to
+                                                  start.
+                                                
+                                 </p>
+                              </div>
+                           </li>
+                           <li class="step">
+                              <p>
+                                             Restart your web server.
+                                           
+                              </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo apachectl restart</strong></span>
+</pre></li>
+                           <li class="step">
+                              <p>
+                                             Adjust your firewall configuration to allow connections to the
+                                             custom port.
+                                           
+                              </p>
+                              <div class="itemizedlist">
+                                 <ul class="itemizedlist" style="list-style-type: disc; ">
+                                    <li class="listitem">
+                                       <p>
+                                                          For CentOS/RHEL 6.6+:
+                                                        
+                                       </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo lokkit -p <em class="replaceable"><code>8080</code></em>:tcp</strong></span>
+</pre><p>
+                                                          Replace <em class="replaceable"><code>8080</code></em> with the custom port you
+                                                          wish to use.
+                                                        
+                                       </p>
+                                    </li>
+                                    <li class="listitem">
+                                       <p>
+                                                          For CentOS/RHEL 7+:
+                                                        
+                                       </p><pre lang="bash" class="programlisting">
+$ <span class="command"><strong>sudo firewall-cmd --zone=public --add-port=<em class="replaceable"><code>8080</code></em>/tcp --permanent</strong></span>
+$ <span class="command"><strong>sudo systemctl reload firewalld</strong></span>
+</pre><p>
+                                                          Replace <em class="replaceable"><code>8080</code></em> with the custom port you
+                                                          wish to use.
+                                                        
+                                       </p>
+                                    </li>
+                                    <li class="listitem">
+                                       <p>
+                                                          For other distributions, consult with your network administrator
+                                                          or operating system documentation to determine how to just your
+                                                          firewall configuration.
+                                                        
+                                       </p>
+                                    </li>
+                                 </ul>
+                              </div>
+                           </li>
+                        </ol>
+                     </div>
+                  </div>
+                  <div class="section" id="setup.post.port.cron">
+                     <div class="titlepage">
+                        <div>
+                           <div>
+                              <h4 class="title">Cron configuration</h4>
+                           </div>
+                        </div>
+                     </div>
+                     <p>
+                                Swarm's <a class="link" href="setup.worker.html" title="Set up a recurring task to spawn workers">recurring task</a> configuration
+                                must be updated to reflect the custom port that you have configured in
+                                <a class="link" href="setup.post.html#setup.post.port.apache" title="Apache configuration">Apache's</a> configuration.
+                              
+                     </p>
+                     <div class="procedure">
+                        <ol class="procedure" type="1">
+                           <li class="step">
+                              <p>
+                                             Edit <code class="filename">/etc/cron.d/helix-swarm</code>.
+                                           
+                              </p>
+                           </li>
+                           <li class="step">
+                              <p>
+                                             Replace:
+                                           
+                              </p><pre class="programlisting">
+https://<em class="replaceable"><code>myswarm.url</code></em>/queue/worker
+</pre><p>
+                                             with:
+                                           
+                              </p><pre class="programlisting">
+https://<em class="replaceable"><code>myswarm.url</code></em>:<em class="replaceable"><code>8080</code></em>/queue/worker
+</pre><p>
+                                             Where <em class="replaceable"><code>myswarm.url</code></em> is the hostname of your
+                                             Swarm installation, and <em class="replaceable"><code>8080</code></em> is the
+                                             custom port you wish to use.
+                                           
+                              </p>
+                           </li>
+                           <li class="step">
+                              <p>
+                                             Save the edited file.
+                                           
+                              </p>
+                              <p>
+                                             New workers should be started at the start of the next minute.
+                                           
+                              </p>
+                           </li>
+                        </ol>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+      <div id="nav" class="toc"></div>
+      <div id="search">
+         <div class="input"><input id="search-text" type="search" placeholder="Search this guide" /><button name="clear" type="button" class="clear"><span class="glyphicon glyphicon-remove-sign"></span></button></div>
+         <div class="controls">
+            <div class="substring"><label><input type="checkbox" class="substring" name="substring" value="hide" checked="1" /><span class="description">Hide partial matches</span></label></div>
+            <div class="highlighter"><label><input type="checkbox" class="highlight" name="highlight" value="show" checked="1" /><span class="description">Highlight matches</span></label></div>
+         </div>
+         <div class="count"><span class="number">0</span> matching pages
+                  
+         </div>
+         <ul class="results"></ul>
+      </div>
+      <div id="footer">
+         <div class="container"><a accesskey="p" class="nav-prev" title="Press 'p', or left-arrow, to view the previous page" href="setup.worker.html"><span class="glyphicon glyphicon-chevron-left"></span><div class="label">Previous</div>
+               <div class="title">Set up a recurring task to spawn workers</div></a><a accesskey="n" class="nav-next" title="Press 'n', or right-arrow, to view the next page" href="setup.upgrade.html"><span class="glyphicon glyphicon-chevron-right"></span><div class="label">Next</div>
+               <div class="title">Upgrading Swarm</div></a></div>
+      </div><script type="text/javascript" src="vendor/jquery/jquery-1.11.3.min.js"></script><script type="text/javascript" src="vendor/bootstrap/js/bootstrap.js"></script><script type="text/javascript" src="vendor/cookie/jquery.cookie.js"></script><script type="text/javascript" src="vendor/highlight/jquery.highlight.js"></script><script type="text/javascript" src="vendor/jsrender/jsrender.js"></script><script type="text/javascript" src="vendor/touchwipe/jquery.touchwipe.min.js"></script><script type="text/javascript" src="vendor/prettify/prettify.js"></script><script defer="1" type="text/javascript" src="js/index.js"></script><script defer="1" type="text/javascript" src="js/toc.js"></script><script defer="1" type="text/javascript" src="js/perforce.js"></script></body>
+</html>

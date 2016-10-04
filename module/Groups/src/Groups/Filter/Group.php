@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2016 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Groups\Filter;
@@ -15,6 +15,7 @@ use Application\InputFilter\InputFilter;
 use Application\Validator\FlatArray as FlatArrayValidator;
 use Groups\Model\Group as GroupModel;
 use P4\Connection\ConnectionInterface as Connection;
+use P4\Validate\GroupName as GroupNameValidator;
 
 class Group extends InputFilter
 {
@@ -117,6 +118,12 @@ class Group extends InputFilter
                                 $id = $filter->nameToId($value);
                                 if (!$id) {
                                     return 'Name must contain at least one letter or number.';
+                                }
+
+                                // check if the group id is valid
+                                $validator = new GroupNameValidator;
+                                if (!$validator->isValid($id)) {
+                                    return array_shift($validator->getMessages());
                                 }
 
                                 // when adding, check if the group already exists

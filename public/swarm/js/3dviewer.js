@@ -68,7 +68,7 @@ swarm.threejs = {
         // add the dependency
         var script  = document.createElement('script');
         script.type = 'text/javascript';
-        script.src  = swarm.threejs.dependencies.shift();
+        script.src  = swarm.url(swarm.threejs.dependencies.shift());
         $(script).one('load', function() {
             swarm.threejs.load();
         });

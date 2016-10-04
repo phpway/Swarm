@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2015 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Projects\View\Helper;
@@ -26,16 +26,17 @@ class ProjectSidebar extends AbstractHelper
         $services   = $view->getHelperPluginManager()->getServiceLocator();
         $config     = $services->get('config');
         $mainlines  = isset($config['projects']['mainlines']) ? (array) $config['projects']['mainlines'] : array();
+        $isPrivate  = $project->isPrivate();
         $owners     = $project->getOwners();
         $moderators = $project->getModerators();
         $members    = $project->getAllMembers();
-        $followers  = $project->getFollowers($members);
+        $followers  = $isPrivate ? array() : $project->getFollowers($members);
         $branches   = $project->getBranches('name', $mainlines);
         $user       = $services->get('user');
         $isMember   = in_array($user->getId(), $members);
         $isFollower = in_array($user->getId(), $followers);
 
-        $html = '<div class="span3 profile-sidebar project-sidebar">'
+        $html = '<div class="span3 profile-sidebar project-sidebar' . ($isPrivate ? ' private-project' : '') . '">'
               .   '<div class="profile-info">'
               .     '<div class="title pad2 padw3">'
               .       '<h4>' . $view->te('About') . '</h4>'
@@ -48,7 +49,7 @@ class ProjectSidebar extends AbstractHelper
                   .  '</div>';
         }
 
-        if (!$isMember) {
+        if (!$isMember && !$isPrivate) {
             $click = "swarm.user.follow('project', '" . $view->escapeJs($project->getId()) . "', this);";
             $html .= '<div class="privileged buttons ' . ($project->getDescription() ? 'pad1' : 'pad2') . ' padw2">'
                   .    '<button type="button" '

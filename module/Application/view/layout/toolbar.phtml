@@ -6,7 +6,7 @@ $translator = $services->get('translator');
 $config     = $services->get('config');
 
 // check for the existence of docs in the current locale
-$helpUrl = $this->basePath() . '/docs/';
+$helpUrl = $this->assetBasePath() . '/docs/';
 if (file_exists(BASE_PATH . '/public/docs/' . $translator->getLocale() . '/index.html')) {
     $helpUrl .= $translator->getLocale() . '/';
 } else if (file_exists(BASE_PATH . '/public/docs/' . $translator->getFallbackLocale() . '/index.html')) {

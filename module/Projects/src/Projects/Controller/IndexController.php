@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2012 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Projects\Controller;
@@ -243,11 +243,17 @@ class IndexController extends AbstractActionController
         $listUsers   = (bool) $query->get('listUsers',   false);
         $disableHtml = (bool) $query->get('disableHtml', false);
         $allFields   = (bool) $query->get('allFields',   false);
+        $idsOnly     = (bool) $query->get('idsOnly',     false);
+
+        // if asked for ids only, return list with projects ids
+        if ($idsOnly) {
+            return new JsonModel($projects->invoke('getId'));
+        }
 
         foreach ($projects as $project) {
             $values = $allFields
                 ? $project->get()
-                : array('id' => $project->getId(), 'name' => $project->getName());
+                : array('id' => $project->getId(), 'name' => $project->getName(), 'isPrivate' => $project->isPrivate());
 
             // get list of members, but flipped so we can easily check if user is a member
             // in the API route case (allFields = true), we will already have them
@@ -261,6 +267,9 @@ class IndexController extends AbstractActionController
             $values['followers'] = $listUsers
                     ? $project->getFollowers(array_flip($members))
                     : $project->get('followers');
+
+            // for private projects set followers count to zero
+            $values['followers'] = $project->isPrivate() ? 0 : $values['followers'];
 
             if ($user) {
                 $values['isMember'] = isset($members[$user]);

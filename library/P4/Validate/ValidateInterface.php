@@ -15,9 +15,9 @@ if (interface_exists('\Zend\Validator\ValidatorInterface')) {
      * Zend_Validate is present, use it. This is important if
      * outside code is type-checking against this interface.
      *
-     * @copyright   2011 Perforce Software. All rights reserved.
-     * @license     Please see LICENSE.txt in top-level folder of this distribution.
-     * @version     <release>/<patch>
+     * @copyright   2013-2016 Perforce Software. All rights reserved.
+     * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+     * @version     2016.2/1446446
      */
     interface ValidateInterface extends \Zend\Validator\ValidatorInterface
     {
@@ -28,9 +28,9 @@ if (interface_exists('\Zend\Validator\ValidatorInterface')) {
     /**
      * Define a interface compatible with Zend_Validate.
      *
-     * @copyright   2011 Perforce Software. All rights reserved.
-     * @license     Please see LICENSE.txt in top-level folder of this distribution.
-     * @version     <release>/<patch>
+     * @copyright   2013-2016 Perforce Software. All rights reserved.
+     * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+     * @version     2016.2/1446446
      */
     interface ValidateInterface
     {

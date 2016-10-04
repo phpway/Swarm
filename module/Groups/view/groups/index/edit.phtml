@@ -4,7 +4,7 @@ $title  = $isEdit ? 'Group Settings' : 'Add Group';
 $this->headTitle()->set($title);
 
 $canDelete = $this->permissions()->isOne(array('super', 'owner' => $group));
-$baseUrl   = $this->escapeFullUrl($this->basePath());
+$baseUrl   = $this->escapeFullUrl($this->assetBasePath());
 
 // scope name editing restrictions to edit mode only
 $canEditName = !$isEdit || $canEditName;

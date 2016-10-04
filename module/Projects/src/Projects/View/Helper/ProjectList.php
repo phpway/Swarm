@@ -2,39 +2,47 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2013 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 namespace Projects\View\Helper;
 
 use Projects\Filter\ProjectList as ProjectListFilter;
+use Projects\Model\Project;
 use Zend\View\Helper\AbstractHelper;
 
 class ProjectList extends AbstractHelper
 {
-    const NO_LINK    = 'noLink';
-    const URL_HELPER = 'urlHelper';
-    const STYLE      = 'style';
+    const HIDE_PRIVATE = 'hidePrivate';
+    const NO_LINK      = 'noLink';
+    const URL_HELPER   = 'urlHelper';
+    const STYLE        = 'style';
 
     /**
      * Returns the markup for a project/branch list
      *
      * @param   array|string|null   $projects   the projects/branches to list
      * @param   string|null         $active     the active project if applicable
-     * @param   array|null          $options      NO_LINK - disable linking to the project
-     *                                         URL_HELPER - optional, plugin/helper to use when generating links
-     *                                              STYLE - set to a string with custom styles for the link
+     * @param   array|null          $options      HIDE_PRIVATE - do not render private projects
+     *                                                 NO_LINK - disable linking to the project
+     *                                              URL_HELPER - optional, plugin/helper to use when generating links
+     *                                                   STYLE - set to a string with custom styles for the link
      * @return  string              the project list html
      */
     public function __invoke($projects = null, $active = null, $options = null)
     {
-        $options    = (array) $options +
-                      array(static::NO_LINK => false, static::URL_HELPER => null, static::STYLE => '');
+        $options    = (array) $options + array(
+            static::HIDE_PRIVATE => false,
+            static::NO_LINK      => false,
+            static::URL_HELPER   => null,
+            static::STYLE        => ''
+        );
         $filter     = new ProjectListFilter;
         $projects   = $filter->filter($projects);
         $view       = $this->getView();
+        $services   = $view->getHelperPluginManager()->getServiceLocator();
         $justBranch = false;
         $style      = $options[static::STYLE]
             ? ' style="' . $view->escapeHtmlAttr($options[static::STYLE]) . '"'
@@ -46,6 +54,20 @@ class ProjectList extends AbstractHelper
             throw new \InvalidArgumentException(
                 'Url helper must be a callable.'
             );
+        }
+
+        // if we are hiding private projects, filter $projects list to keep only public projects
+        if ($options[static::HIDE_PRIVATE]) {
+            $models = Project::fetchAll(
+                array(Project::FETCH_BY_IDS => array_keys($projects)),
+                $services->get('p4_admin')
+            );
+
+            foreach ($projects as $project => $branches) {
+                if (!isset($models[$project]) || $models[$project]->isPrivate()) {
+                    unset($projects[$project]);
+                }
+            }
         }
 
         // we don't need to output the project id if we have an active project

@@ -2,9 +2,9 @@
 /**
  * Perforce Swarm
  *
- * @copyright   2014 Perforce Software. All rights reserved.
- * @license     Please see LICENSE.txt in top-level folder of this distribution.
- * @version     <release>/<patch>
+ * @copyright   2013-2016 Perforce Software. All rights reserved.
+ * @license     Please see LICENSE.txt in top-level readme folder of this distribution.
+ * @version     2016.2/1446446
  */
 
 return array(
@@ -21,7 +21,7 @@ return array(
                         'type' => 'Zend\Mvc\Router\Http\Segment',
                         'options' => array(
                             'route' => '/[:version/]version[/]',
-                            'constraints' => array('version' => 'v(3|2|1(\.[1-2])?)'),
+                            'constraints' => array('version' => 'v(4|3|2|1(\.[1-2])?)'),
                             'defaults' => array(
                                 'controller' => 'Api\Controller\Index',
                                 'action'     => 'version'
@@ -33,7 +33,7 @@ return array(
                         'may_terminate' => true,
                         'options' => array(
                             'route' => '/:version/activity[/]',
-                            'constraints' => array('version' => 'v(3|2|1(\.[1-2])?)'),
+                            'constraints' => array('version' => 'v(4|3|2|1(\.[1-2])?)'),
                             'defaults' => array(
                                 'controller' => 'Api\Controller\Activity',
                             ),
@@ -43,7 +43,7 @@ return array(
                         'type' => 'Zend\Mvc\Router\Http\Segment',
                         'options' => array(
                             'route' => '/:version/comments[/:id][/]',
-                            'constraints' => array('version' => 'v3'),
+                            'constraints' => array('version' => 'v(4|3)'),
                             'defaults' => array(
                                 'controller' => 'Api\Controller\Comments',
                             ),
@@ -54,7 +54,7 @@ return array(
                         'may_terminate' => true,
                         'options' => array(
                             'route' => '/:version/projects[/:id][/]',
-                            'constraints' => array('version' => 'v(3|2|1(\.[1-2])?)'),
+                            'constraints' => array('version' => 'v(4|3|2|1(\.[1-2])?)'),
                             'defaults' => array(
                                 'controller' => 'Api\Controller\Projects',
                             ),
@@ -64,7 +64,7 @@ return array(
                         'type' => 'Zend\Mvc\Router\Http\Segment',
                         'options' => array(
                             'route' => '/:version/groups[/:id][/]',
-                            'constraints' => array('version' => 'v(3|2)'),
+                            'constraints' => array('version' => 'v(4|3|2)'),
                             'defaults' => array(
                                 'controller' => 'Api\Controller\Groups',
                             ),
@@ -74,7 +74,7 @@ return array(
                         'type' => 'Zend\Mvc\Router\Http\Segment',
                         'options' => array(
                             'route' => '/:version/reviews[/:id][/]',
-                            'constraints' => array('version' => 'v(3|2|1(\.[1-2])?)'),
+                            'constraints' => array('version' => 'v(4|3|2|1(\.[1-2])?)'),
                             'defaults' => array(
                                 'controller' => 'Api\Controller\Reviews',
                             ),
@@ -84,7 +84,7 @@ return array(
                         'type' => 'Zend\Mvc\Router\Http\Segment',
                         'options' => array(
                             'route' => '/:version/reviews/:id/changes[/]',
-                            'constraints' => array('version' => 'v(3|2|1(\.[1-2])?)'),
+                            'constraints' => array('version' => 'v(4|3|2|1(\.[1-2])?)'),
                             'defaults' => array(
                                 'controller' => 'Api\Controller\Reviews',
                                 'action'     => 'addChange',
@@ -95,7 +95,7 @@ return array(
                         'type' => 'Zend\Mvc\Router\Http\Segment',
                         'options' => array(
                             'route' => '/:version/reviews/:id/state[/]',
-                            'constraints' => array('version' => 'v(3|2)'),
+                            'constraints' => array('version' => 'v(4|3|2)'),
                             'defaults' => array(
                                 'controller' => 'Api\Controller\Reviews',
                                 'action'     => 'state',
